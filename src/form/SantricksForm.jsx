@@ -3,7 +3,8 @@ import axios from "axios";
 
 const SantricksForm = () => {
 
-  const API_URL = import.meta.env.VITE_API_URL; // ✅ Dynamic URL
+  // Backend URL (hardcoded)
+  const API_URL = "https://santrickbackenew.vercel.app";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -23,7 +24,7 @@ const SantricksForm = () => {
     e.preventDefault();
 
     try {
-      await axios.post(`${API_URL}/api/entries/add`, formData); // ✅ Dynamic URL
+      await axios.post(`${API_URL}/api/entries/add`, formData);
 
       alert("✅ Submitted Successfully! Check your email.");
       setFormData({ name: "", email: "", phone: "", message: "" });
