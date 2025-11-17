@@ -10,37 +10,40 @@ export default function BookingList() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    async function load() {
+    const loadBookings = async () => {
       try {
         const res = await api.get("/orders/my-orders", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Bookings:", res.data);
-
-        // ⭐ Add full backend image URL
         const backendBase = api.defaults.baseURL.replace("/api", "");
 
-        const formatted = res.data.map(order => ({
+        const formatted = res.data.map((order, orderIndex) => ({
           ...order,
-          items: order.items.map(item => ({
-            ...item,
-            image: item.image
-              ? `${backendBase}${item.image}`
-              : "/placeholder.png",
-          })),
+          uid: `booking-${order._id}-${orderIndex}`,
+          items: order.items.map((item, itemIndex) => {
+            let imageUrl = "/placeholder.png";
+            if (item.image) {
+              if (item.image.startsWith("http")) imageUrl = item.image;
+              else imageUrl = `${backendBase}${item.image}`;
+            }
+            return {
+              ...item,
+              uid: `item-${item.productId}-${itemIndex}`,
+              image: imageUrl,
+            };
+          }),
         }));
 
         setBookings(formatted);
-
       } catch (err) {
-        console.error("Failed to load orders:", err);
+        console.error("Failed to load bookings:", err);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    load();
+    loadBookings();
   }, []);
 
   if (loading) return <p className="loading">Loading bookings...</p>;
@@ -49,30 +52,30 @@ export default function BookingList() {
   return (
     <div className="booking-container">
       <h1 className="booking-title">My Bookings</h1>
-
       <div className="booking-list">
-        {bookings.map(order => (
-          <div className="booking-card" key={order._id}>
-
+        {bookings.map((order) => (
+          <div className="booking-card" key={order.uid}>
             <div className="booking-header">
-              <h3>Booking #{order._id.slice(-6)}</h3>
-              <span className={`status ${order.status}`}>
+              <h3>Booking {order.orderId}</h3> {/* Use backend orderId */}
+              <span className={`status ${order.status.toLowerCase()}`}>
                 {order.status.toUpperCase()}
               </span>
             </div>
 
             <p>
               <strong>Delivery:</strong>{" "}
-              {dayjs(order.deliveryStartDate).format("DD MMM")} →
+              {dayjs(order.deliveryStartDate).format("DD MMM")} →{" "}
               {dayjs(order.deliveryEndDate).format("DD MMM")}
             </p>
 
-            <p><strong>Total Amount:</strong> ₹{order.totalAmount}</p>
+            <p>
+              <strong>Total Amount:</strong> ₹{order.totalAmount}
+            </p>
 
             <div className="booking-items">
-              {order.items.map(item => (
-                <div className="booking-item" key={item.productId}>
-                  <img src={item.image} alt={item.name} />
+              {order.items.map((item) => (
+                <div className="booking-item" key={item.uid}>
+                  {/* <img src={item.image} alt={item.name} /> */}
                   <div>
                     <p>{item.name}</p>
                     <small>
@@ -84,7 +87,6 @@ export default function BookingList() {
             </div>
 
             <button className="view-btn">View Details</button>
-
           </div>
         ))}
       </div>

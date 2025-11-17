@@ -21,9 +21,10 @@ const CheckoutPage = () => {
     paymentMethod: "cod",
     deliveryStartDate: null,
     deliveryEndDate: null,
+    oneTimeDate: null,
   });
 
-  // Prefill user info if logged in
+  // Prefill user info
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
@@ -51,7 +52,7 @@ const CheckoutPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleDateChange = (dates) => {
+  const handleRangeChange = (dates) => {
     if (!dates) return;
     setFormData({
       ...formData,
@@ -60,19 +61,26 @@ const CheckoutPage = () => {
     });
   };
 
+  const handleOneTimeChange = (date) => {
+    setFormData({
+      ...formData,
+      oneTimeDate: date,
+      deliveryStartDate: date,
+      deliveryEndDate: date,
+    });
+  };
+
   const handleCheckout = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (
       !formData.name ||
       !formData.address ||
       !formData.phone ||
       !formData.email ||
-      !formData.deliveryStartDate ||
-      !formData.deliveryEndDate
+      !formData.deliveryStartDate
     ) {
-      toast.error("Please fill all fields and select delivery dates!");
+      toast.error("Please fill all fields and select delivery date(s)!");
       return;
     }
 
@@ -83,10 +91,11 @@ const CheckoutPage = () => {
         return;
       }
 
-      // Build order data
       const orderData = {
         deliveryStartDate: formData.deliveryStartDate.format("YYYY-MM-DD"),
-        deliveryEndDate: formData.deliveryEndDate.format("YYYY-MM-DD"),
+        deliveryEndDate: formData.deliveryEndDate
+          ? formData.deliveryEndDate.format("YYYY-MM-DD")
+          : formData.deliveryStartDate.format("YYYY-MM-DD"),
         paymentMethod: formData.paymentMethod,
         items: cartItems.map((item) => ({
           productId: item._id,
@@ -98,17 +107,13 @@ const CheckoutPage = () => {
         totalAmount,
       };
 
-      // Send to backend
       await api.post("/orders", orderData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       toast.success("🎉 Booking successful!");
       clearCart();
-
-      setTimeout(() => {
-        navigate("/bookings");
-      }, 1500);
+      setTimeout(() => navigate("/bookings"), 1500);
     } catch (err) {
       console.error("Order failed:", err);
       const message =
@@ -117,12 +122,15 @@ const CheckoutPage = () => {
     }
   };
 
+  // Determine if the order is one-time or range
+  const isOneTime = cartItems.every(
+    (item) => item.selectedOption === "oneTime"
+  );
+
   return (
     <div className="checkout-container">
       <Toaster position="top-right" />
-      <Link to="/" className="back-link">
-        ← Back to Cart
-      </Link>
+      <Link to="/" className="back-link">← Back to Cart</Link>
       <h1 className="checkout-title">Checkout</h1>
 
       <div className="checkout-content">
@@ -170,19 +178,30 @@ const CheckoutPage = () => {
           </div>
 
           <div className="form-group">
-            <label>Delivery Dates</label>
-            <RangePicker
-              value={
-                formData.deliveryStartDate && formData.deliveryEndDate
-                  ? [formData.deliveryStartDate, formData.deliveryEndDate]
-                  : []
-              }
-              onChange={handleDateChange}
-              disabledDate={(current) => current && current < dayjs().startOf("day")}
-              style={{ width: "100%" }}
-              format="YYYY-MM-DD"
-              required
-            />
+            <label>Delivery Date{isOneTime ? "" : " Range"}</label>
+            {isOneTime ? (
+              <DatePicker
+                value={formData.oneTimeDate}
+                onChange={handleOneTimeChange}
+                disabledDate={(current) => current && current < dayjs().startOf("day")}
+                style={{ width: "100%" }}
+                format="YYYY-MM-DD"
+                required
+              />
+            ) : (
+              <RangePicker
+                value={
+                  formData.deliveryStartDate && formData.deliveryEndDate
+                    ? [formData.deliveryStartDate, formData.deliveryEndDate]
+                    : []
+                }
+                onChange={handleRangeChange}
+                disabledDate={(current) => current && current < dayjs().startOf("day")}
+                style={{ width: "100%" }}
+                format="YYYY-MM-DD"
+                required
+              />
+            )}
           </div>
 
           <div className="form-group">

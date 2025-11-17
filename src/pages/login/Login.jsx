@@ -2,17 +2,18 @@ import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/api"; // centralized axios instance
+import loginImage from "./side.png"; // right side image
+import logo from "../../assets/logo.png"; // your logo
+import "./LoginPage.css";
 
 const Login = () => {
   const navigate = useNavigate();
 
   const handleGoogleLoginSuccess = async (credentialResponse) => {
-    // Dynamic import for jwt-decode
     const { default: jwt_decode } = await import("jwt-decode");
     const decoded = jwt_decode(credentialResponse.credential);
 
     try {
-      // Use centralized api instance
       const res = await api.post("/auth/google", {
         token: credentialResponse.credential,
       });
@@ -32,20 +33,24 @@ const Login = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-      }}
-    >
-      <h1>Login with Google</h1>
-      <GoogleLogin
-        onSuccess={handleGoogleLoginSuccess}
-        onError={handleGoogleLoginError}
-      />
+    <div className="login-container">
+      {/* Left Side */}
+      <div className="login-left">
+        <div className="logo-wrapper">
+          <img src={logo} alt="Logo" className="logo" />
+        </div>
+        <h1 className="login-title">Welcome Back</h1>
+        <p className="login-subtitle">Login with your Google account</p>
+        <GoogleLogin
+          onSuccess={handleGoogleLoginSuccess}
+          onError={handleGoogleLoginError}
+        />
+      </div>
+
+      {/* Right Side */}
+      <div className="login-right">
+        <img src={loginImage} alt="Login Visual" className="login-image" />
+      </div>
     </div>
   );
 };

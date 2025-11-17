@@ -1,0 +1,156 @@
+/* Container */
+.profile-wrapper {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #e4e4e4;
+  border-radius: 14px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #ececec;
+  padding-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 34px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-title h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.profile-title p {
+  margin: 4px 0 0 0;
+  color: #6b7280;
+}
+
+/* Header Buttons */
+.profile-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.profile-actions button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border: 1px solid #d5d5d5;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-actions button:hover {
+  background: #f3f4f6;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Info Grid */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #7b7b7b;
+}
+
+.info-value {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Tags */
+.tag-red {
+  background: #ffe5e5;
+  color: #d62828;
+  padding: 5px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  font-size: 13px;
+}
+
+.tag-green {
+  background: #e0f9e6;
+  color: #1c8d3f;
+  padding: 5px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  font-size: 13px;
+}
+
+/* Logout Button */
+.logout-btn {
+  margin-top: 30px;
+  background: #ef4444;
+  color: white;
+  padding: 12px 22px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: none;
+  float: right;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #d52525;
+}
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;   /* full screen center */
+  width: 100%;
+  background: #f9fafb;
+}
+
+.center-message {
+  font-size: 22px;
+  font-weight: 600;
+  color: #444;
+}
