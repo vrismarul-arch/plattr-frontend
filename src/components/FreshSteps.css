@@ -1,0 +1,195 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Shrikhand&display=swap");
+
+/* ========== Base Section ========== */
+.steps-section {
+  background: linear-gradient(145deg, #fffaf5 0%, #fff1e0 100%);
+  padding: 80px 20px;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+.steps-section::before,
+.steps-section::after {
+  content: "";
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd1a4 0%, transparent 70%);
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.steps-section::before {
+  top: -80px;
+  left: -60px;
+}
+.steps-section::after {
+  bottom: -80px;
+  right: -60px;
+}
+
+/* ========== Heading ========== */
+.steps-heading {
+  font-family: "Shrikhand", cursive;
+  font-size: 2.2rem;
+  color: #222;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 1;
+  line-height: 1.3;
+}
+.steps-heading span {
+  color: #ff6b00;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+/* ========== Step Container ========== */
+.steps-flow {
+  display: flex;
+  top: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 80px;
+  flex-wrap: wrap;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== Step Card ========== */
+.flow-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 260px;
+  transition: all 0.4s ease;
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.flow-step.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.flow-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.flow-step:hover .flow-icon {
+  transform: scale(1.1);
+}
+
+.flow-card {
+  background: #fff;
+  padding: 20px 18px;
+  border-radius: 18px;
+  width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.flow-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.flow-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.flow-card p {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Connector line (desktop) */
+.flow-line {
+  position: absolute;
+  right: -60px;
+  top: 35px;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, #ffa458, #ffcd91);
+  border-radius: 2px;
+}
+
+/* ========== Mobile Responsive ========== */
+@media (max-width: 900px) {
+  .steps-flow {
+    top: 20px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .flow-step {
+    width: 85%;
+  }
+
+  .flow-line {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+    width: 60px;
+  }
+
+  .steps-heading {
+    font-size: 1.8rem;
+    margin-bottom: 40px;
+  }
+}
+
+/* ========== Extra Small (Mobile) ========== */
+@media (max-width: 600px) {
+  .steps-section {
+    padding: 60px 14px;
+  }
+.flow-line {
+  position: absolute;
+  right: -60px;
+  top: 195px;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, #ffa458, #ffcd91);
+  border-radius: 2px;
+}
+  .flow-icon {
+    width: 58px;
+    height: 58px;
+    font-size: 24px;
+  }
+
+  .flow-card {
+    border-radius: 14px;
+  }
+
+  .flow-card h3 {
+    font-size: 1rem;
+  }
+  .flow-card p {
+    font-size: 0.85rem;
+  }
+
+  .steps-heading {
+    font-size: 1.6rem;
+  }
+}

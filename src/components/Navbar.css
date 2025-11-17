@@ -1,0 +1,132 @@
+/* ===========================
+   Color Palette
+   =========================== */
+/*
+   Dark Brown: #4b2e05
+   Warm Brown: #a66b00
+   Light Beige: #fff7e6
+   White: #ffffff
+   Text: #1a1a1a
+*/
+
+/* ===========================
+   Navbar Container
+   =========================== */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #e8bc89 0%, #a66b00 100%);
+  padding: 0 24px;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* ===========================
+   Logo Styling
+   =========================== */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.navbar-logo-text {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-logo img {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.navbar-logo img:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* ===========================
+   Right Section
+   =========================== */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar-user {
+  cursor: pointer;
+}
+
+.navbar-user .ant-avatar {
+  background-color: #a66b00;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+/* ===========================
+   Mobile Menu Button
+   =========================== */
+.navbar-mobile-button {
+  display: none;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .navbar-mobile-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-header {
+    padding: 0 16px;
+  }
+
+  .navbar-logo img {
+    height: 34px;
+  }
+}
+
+/* ===========================
+   Drawer Styling
+   =========================== */
+.ant-drawer-title {
+  font-weight: 600;
+  color: #a66b00;
+}
+
+.ant-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ant-btn {
+  border-radius: 8px;
+  background: #a66b00;
+  color: white;
+  border: none;
+  transition: background 0.3s ease;
+}
+
+.ant-btn:hover {
+  background: #8d5900;
+  color: #fff;
+}
+
+/* ===========================
+   Hover Effects & Transitions
+   =========================== */
+.navbar-header,
+.navbar-logo img,
+.ant-btn {
+  transition: all 0.3s ease;
+}

@@ -1,0 +1,29 @@
+.profile-container {
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-card {
+  width: 400px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+}
+
+.profile-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.profile-info p {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.profile-info strong {
+  color: #333;
+}
