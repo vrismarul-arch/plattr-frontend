@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./ProductCard.css";
-import api from "../../api/api.jsx"; // Axios instance
-import { useCart } from "../../context/CartContext.jsx"; // Cart context
+import api from "../../api/api.jsx";
+import { useCart } from "../../context/CartContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 const ProductCard = () => {
@@ -13,12 +13,16 @@ const ProductCard = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        // Fetch products from the backend API
         const res = await api.get("/products");
+        // Get the backend base URL (e.g., 'http://localhost:8800' from 'http://localhost:8800/api')
         const backendBase = api.defaults.baseURL.replace("/api", "");
 
         const formattedProducts = res.data.map((item) => ({
           ...item,
+          // Construct the full image URL
           img: item.img ? `${backendBase}${item.img}` : "/placeholder.png",
+          // Ensure prices object and properties exist to prevent runtime errors
           prices: {
             oneTime: item.prices?.oneTime || 0,
             threeDays: item.prices?.threeDays || 0,
@@ -36,18 +40,17 @@ const ProductCard = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const handleOrder = (item) => {
-    // Check if user is logged in
+    // Check if the user is authenticated (simplified check)
     const user = localStorage.getItem("user");
     if (!user) {
-      // Not logged in → redirect to login page
       navigate("/login");
       return;
     }
-
-    // Logged in → add to cart and navigate to cart
+    
+    // Add item to cart context and navigate to cart page
     addToCart(item);
     navigate("/cart");
   };
@@ -63,10 +66,25 @@ const ProductCard = () => {
 
       <div className="food-grid">
         {products.map((item) => (
-          <div className="food-card-modern" key={item._id}>
+          // **Corrected className (removed trailing comma)**
+          <div
+            key={item._id}
+            className="food-card-modern clickable-card"
+            onClick={() => handleOrder(item)}
+            onKeyDown={(e) => {
+              // Handle keyboard accessibility (Enter/Space to activate card)
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleOrder(item);
+              }
+            }}
+            role="button" // Indicates the div is interactive
+            tabIndex={0} // Makes the div focusable
+            aria-label={`Order ${item.name}`}
+          >
             <div className="food-image-wrap">
               <img src={item.img} alt={item.name} className="food-image" />
-              <div className="food-rating">⭐ {item.rating || 0}</div>
+              <div className="food-rating">⭐ {item.rating || 4.8}</div>
             </div>
 
             <div className="food-details">
@@ -81,7 +99,14 @@ const ProductCard = () => {
               </div>
             </div>
 
-            <button className="food-order-btn" onClick={() => handleOrder(item)}>
+            <button
+              className="food-order-btn"
+              onClick={(e) => {
+                // Stop propagation so clicking the button doesn't also trigger the parent div's onClick
+                e.stopPropagation(); 
+                handleOrder(item);
+              }}
+            >
               Order Now
             </button>
           </div>
