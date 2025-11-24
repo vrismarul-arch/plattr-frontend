@@ -16,6 +16,7 @@
   gap: 20px;
   border-bottom: 1px solid #ececec;
   padding-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .profile-avatar {
@@ -41,6 +42,8 @@
 .profile-title {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 180px;
 }
 
 .profile-title h2 {
@@ -56,9 +59,9 @@
 
 /* Header Buttons */
 .profile-actions {
-  margin-left: auto;
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .profile-actions button {
@@ -104,23 +107,13 @@
   font-weight: 500;
 }
 
-/* Tags */
-.tag-red {
-  background: #ffe5e5;
-  color: #d62828;
-  padding: 5px 14px;
-  border-radius: 20px;
-  display: inline-block;
-  font-size: 13px;
-}
-
-.tag-green {
-  background: #e0f9e6;
-  color: #1c8d3f;
-  padding: 5px 14px;
-  border-radius: 20px;
-  display: inline-block;
-  font-size: 13px;
+/* Input styling */
+.profile-info-grid input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
 }
 
 /* Logout Button */
@@ -140,6 +133,8 @@
 .logout-btn:hover {
   background: #d52525;
 }
+
+/* Center wrapper */
 .center-wrapper {
   display: flex;
   justify-content: center;
@@ -153,4 +148,40 @@
   font-size: 22px;
   font-weight: 600;
   color: #444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-wrapper {
+    margin: 20px 10px;
+    padding: 20px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-actions {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .logout-btn {
+    width: 100%;
+    text-align: center;
+    float: none;
+  }
+
+  .profile-title h2 {
+    font-size: 24px;
+  }
+
+  .profile-title p {
+    font-size: 14px;
+  }
 }

@@ -1,0 +1,52 @@
+/* src/components/LoadingScreen.css */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff5f2;
+  z-index: 9999;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* ← This line centers everything perfectly */
+  gap: 50px;               /* space between logo, dots and text */
+}
+
+.logo {
+  width: 140px;
+  height: auto;
+}
+
+/* This is the magic that centers the three dots */
+.dot-loader {
+  display: flex;
+  justify-content: center;   /* centers the dots horizontally */
+  gap: 20px;
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.dot-1 { background: #ea5d15; }
+.dot-2 { background: #b4650b; animation-delay: 0.2s; }
+.dot-3 { background: #000000; animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-28px); }
+}
+
+.loading-text {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #000000;
+}

@@ -111,7 +111,7 @@
 
 .ant-btn {
   border-radius: 8px;
-  background: #a66b00;
+  background: #a66b00 !important;
   color: white;
   border: none;
   transition: background 0.3s ease;

@@ -6,11 +6,11 @@ function App() {
     <>
       <AppRouter />
       <Toaster
-        position="top-right"
+       
         reverseOrder={false}
         toastOptions={{
           success: {
-            duration: 2000,
+            duration: 200,
           },
           error: {
             duration: 3000,

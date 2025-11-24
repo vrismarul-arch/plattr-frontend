@@ -1,0 +1,104 @@
+/* ------------------------------------
+   GLOBAL MODAL OVERRIDE (SAFE)
+------------------------------------ */
+
+.ant-modal {
+  top: 40px !important; /* Push modal slightly down */
+}
+
+.ant-modal-content {
+  border-radius: 14px !important;
+  padding: 20px 24px !important;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Modal Title */
+.ant-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* ------------------------------------
+   FORM SPACING FIX
+------------------------------------ */
+
+.ant-form-item {
+  margin-bottom: 14px !important;
+}
+
+/* Label styling */
+.ant-form-item-label > label {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Ant Input Styling */
+.ant-input,
+.ant-input-number,
+.ant-input-number-input,
+.ant-input-affix-wrapper {
+  border-radius: 8px !important;
+  height: 42px !important;
+}
+
+/* Textarea height */
+.ant-input-textarea {
+  border-radius: 10px !important;
+}
+
+/* ------------------------------------
+   UPLOAD BUTTON FIX
+------------------------------------ */
+.ant-upload-select {
+  width: 100%;
+}
+
+.ant-upload .ant-btn {
+  width: 100%;
+  border-radius: 8px !important;
+}
+
+/* ------------------------------------
+   RESPONSIVE GRID FIX
+------------------------------------ */
+
+@media (max-width: 768px) {
+  .ant-modal {
+    width: 95% !important;
+    margin: 0 auto;
+  }
+
+  .ant-modal-content {
+    padding: 15px !important;
+  }
+
+  .ant-row {
+    display: block !important;
+  }
+
+  .ant-col {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+
+  h3, h4 {
+    margin-top: 15px;
+  }
+}
+
+/* ------------------------------------
+   MOBILE FIX FOR SMALL DEVICES
+------------------------------------ */
+
+@media (max-width: 480px) {
+  .ant-modal-title {
+    font-size: 18px;
+  }
+
+  .ant-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
+}

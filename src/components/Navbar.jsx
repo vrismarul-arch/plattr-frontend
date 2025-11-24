@@ -39,9 +39,11 @@ const Navbar = () => {
     if (key === "profile") {
       navigate("/profile");
     } else if (key === "logout") {
+      // Clear local storage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      navigate("/");
+      // Refresh the page to show logged-out state
+      window.location.href = "/";
     }
   };
 

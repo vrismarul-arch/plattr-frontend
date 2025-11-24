@@ -1,61 +1,83 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Button, Upload, message } from "antd";
+import { Drawer, Form, Input, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import api from "../../api/api.jsx";
 
-const BannerForm = ({ visible, banner, onClose, onSaved }) => {
+const BannerForm = ({ open, banner, onClose, onSaved }) => {
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState([]);
+  const [desktopFile, setDesktopFile] = useState([]);
+  const [mobileFile, setMobileFile] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Load editing data
   useEffect(() => {
     if (banner) {
-      form.setFieldsValue({ title: banner.title, link: banner.link });
-      setFileList(
+      form.setFieldsValue({
+        title: banner.title || "",
+        link: banner.link || "",
+      });
+
+      setDesktopFile(
         banner.imageUrl
           ? [
               {
                 uid: "-1",
-                name: "banner.png",
+                name: "desktop.png",
                 status: "done",
-                url: `http://localhost:5000${banner.imageUrl}`,
+                url: banner.imageUrl,
+              },
+            ]
+          : []
+      );
+
+      setMobileFile(
+        banner.mobileImageUrl
+          ? [
+              {
+                uid: "-2",
+                name: "mobile.png",
+                status: "done",
+                url: banner.mobileImageUrl,
               },
             ]
           : []
       );
     } else {
       form.resetFields();
-      setFileList([]);
+      setDesktopFile([]);
+      setMobileFile([]);
     }
-  }, [banner, form]);
+  }, [banner]);
 
+  // Save Banner
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      if (!banner && fileList.length === 0) {
-        message.error("Please upload an image");
-        return;
-      }
-
       setLoading(true);
-      const formData = new FormData();
-      formData.append("title", values.title);
-      formData.append("link", values.link || "");
-      if (fileList[0]?.originFileObj) formData.append("image", fileList[0].originFileObj);
 
-      let res;
-      if (banner) {
-        res = await api.put(`/banners/${banner._id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      } else {
-        res = await api.post("/banners", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+      const fd = new FormData();
+      fd.append("title", values.title);
+      fd.append("link", values.link || "");
+
+      // Send only if new desktop image uploaded
+      if (desktopFile[0]?.originFileObj) {
+        fd.append("desktop", desktopFile[0].originFileObj);
       }
 
-      message.success(`Banner ${banner ? "updated" : "created"} successfully`);
-      onSaved(res.data);
+      // Send only if new mobile image uploaded
+      if (mobileFile[0]?.originFileObj) {
+        fd.append("mobile", mobileFile[0].originFileObj);
+      }
+
+      if (banner) {
+        await api.put(`/banners/${banner._id}`, fd);
+        message.success("Banner updated");
+      } else {
+        await api.post("/banners", fd);
+        message.success("Banner created");
+      }
+
+      onSaved();
       onClose();
     } catch (err) {
       console.error(err);
@@ -66,37 +88,63 @@ const BannerForm = ({ visible, banner, onClose, onSaved }) => {
   };
 
   return (
-    <Modal
+    <Drawer
       title={banner ? "Edit Banner" : "Add Banner"}
-      open={visible}
-      onCancel={onClose}
-      footer={[
-        <Button key="cancel" onClick={onClose}>Cancel</Button>,
-        <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-          {banner ? "Update" : "Add"}
-        </Button>,
-      ]}
+      width={430}
+      open={open}
+      onClose={onClose}
+      extra={
+        <Button type="primary" loading={loading} onClick={handleSubmit}>
+          Save
+        </Button>
+      }
     >
       <Form layout="vertical" form={form}>
+        {/* Title */}
         <Form.Item name="title" label="Title">
-          <Input />
+          <Input placeholder="Banner Title" />
         </Form.Item>
+
+        {/* Link */}
         <Form.Item name="link" label="Link">
-          <Input />
+          <Input placeholder="https://example.com" />
         </Form.Item>
-        <Form.Item label="Banner Image">
+
+        {/* Desktop Image */}
+        <Form.Item label="Desktop Image">
           <Upload
             beforeUpload={() => false}
-            fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
+            listType="picture"
             maxCount={1}
-            accept="image/*"
+            fileList={desktopFile}
+            onChange={({ fileList }) => setDesktopFile(fileList)}
+            onRemove={() => {
+              setDesktopFile([]);
+              return true;
+            }}
           >
-            <Button icon={<UploadOutlined />}>Select Image</Button>
+            <Button icon={<UploadOutlined />}>Upload Desktop Image</Button>
+          </Upload>
+        </Form.Item>
+
+        {/* Mobile Image */}
+        <Form.Item label="Mobile Image">
+          <Upload
+            beforeUpload={() => false}
+            listType="picture"
+            maxCount={1}
+            fileList={mobileFile}
+            onChange={({ fileList }) => setMobileFile(fileList)}
+            onRemove={() => {
+              setMobileFile([]);
+              return true;
+            }}
+          >
+            <Button icon={<UploadOutlined />}>Upload Mobile Image</Button>
           </Upload>
         </Form.Item>
       </Form>
-    </Modal>
+    </Drawer>
   );
 };
 

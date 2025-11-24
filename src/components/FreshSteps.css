@@ -9,7 +9,15 @@
   overflow: hidden;
   position: relative;
 }
+.step-link {
+  color: #25d366;
+  font-weight: 600;
+  text-decoration: none;
+}
 
+.step-link:hover {
+  text-decoration: underline;
+}
 .steps-section::before,
 .steps-section::after {
   content: "";

@@ -4,17 +4,16 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "./Banner.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import api from "../../api/api.jsx"; // your axios instance
+import api from "../../api/api.jsx";
 
-// Custom arrows
-const PrevArrow = ({ className, style, onClick }) => (
-  <button className={`custom-arrow prev ${className}`} style={style} onClick={onClick}>
+const PrevArrow = ({ className, onClick }) => (
+  <button className={`custom-arrow prev`} onClick={onClick}>
     <ChevronLeft size={28} />
   </button>
 );
 
-const NextArrow = ({ className, style, onClick }) => (
-  <button className={`custom-arrow next ${className}`} style={style} onClick={onClick}>
+const NextArrow = ({ className, onClick }) => (
+  <button className={`custom-arrow next`} onClick={onClick}>
     <ChevronRight size={28} />
   </button>
 );
@@ -23,7 +22,6 @@ export default function Banner() {
   const [isMobile, setIsMobile] = useState(false);
   const [banners, setBanners] = useState([]);
 
-  // Check for mobile screen
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -31,54 +29,37 @@ export default function Banner() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Fetch banners from backend
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const { data } = await api.get("/banners");
 
-        // Ensure each banner has correct full image URL
-        const backendBase = api.defaults.baseURL.replace("/api", "");
-        const formattedBanners = data.map((b) => ({
+        const formatted = data.map((b) => ({
           ...b,
-          imageUrl: b.imageUrl ? `${backendBase}${b.imageUrl}` : "/placeholder.png",
-          mobileImageUrl: b.mobileImageUrl ? `${backendBase}${b.mobileImageUrl}` : b.imageUrl ? `${backendBase}${b.imageUrl}` : "/placeholder.png",
+          imageUrl: b.imageUrl,
+          mobileImageUrl: b.mobileImageUrl || b.imageUrl,
         }));
 
-        setBanners(formattedBanners);
+        setBanners(formatted);
       } catch (err) {
         console.error("Failed to fetch banners", err);
       }
     };
+
     fetchBanners();
   }, []);
 
   const settings = {
     dots: true,
     infinite: true,
-    speed: 700,
+    speed: 600,
     autoplay: true,
-    autoplaySpeed: 5000,
+    autoplaySpeed: 4000,
     slidesToShow: 1,
     slidesToScroll: 1,
     fade: true,
     prevArrow: <PrevArrow />,
     nextArrow: <NextArrow />,
-    appendDots: (dots) => (
-      <ul
-        style={{
-          margin: 0,
-          position: "absolute",
-          bottom: "20px",
-          width: "100%",
-          display: "flex",
-          justifyContent: "center",
-          zIndex: 3,
-        }}
-      >
-        {dots}
-      </ul>
-    ),
   };
 
   return (
@@ -92,11 +73,9 @@ export default function Banner() {
               <div
                 className="ads-slide-bg"
                 style={{
-                  backgroundImage: `url(${imageUrl})`,
+                  backgroundImage: `url("${imageUrl}")`,
                 }}
-              >
-                <div className="ads-overlay" />
-              </div>
+              ></div>
             </div>
           );
         })}

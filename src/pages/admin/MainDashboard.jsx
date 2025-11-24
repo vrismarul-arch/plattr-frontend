@@ -7,25 +7,28 @@ import {
   Statistic,
   Table,
   Tag,
-  DatePicker
+  DatePicker,
+  Popover,
+  Button,
 } from "antd";
 import {
   ShoppingCartOutlined,
   ShopOutlined,
-  DollarOutlined
+  DollarOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   CartesianGrid,
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
 } from "recharts";
 import toast, { Toaster } from "react-hot-toast";
 import dayjs from "dayjs";
@@ -38,14 +41,15 @@ const MainDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
+  const [todayOrders, setTodayOrders] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [statusData, setStatusData] = useState([]);
   const [dateRange, setDateRange] = useState(null);
 
-  // Fetch Products (NO TOKEN, DIRECT FETCH)
+  // Fetch Products
   const fetchProducts = async () => {
     try {
-      const res = await api.get("/products"); // no headers
+      const res = await api.get("/products");
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -53,12 +57,18 @@ const MainDashboard = () => {
     }
   };
 
-  // Fetch Orders (NO TOKEN, DIRECT FETCH)
+  // Fetch Orders
   const fetchOrders = async () => {
     try {
-      const res = await api.get("/orders"); // no headers
+      const res = await api.get("/orders");
       setOrders(res.data);
       setFilteredOrders(res.data);
+
+      const today = dayjs().startOf("day");
+      const todayList = res.data.filter((o) =>
+        dayjs(o.createdAt).isAfter(today)
+      );
+      setTodayOrders(todayList);
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch orders!");
@@ -89,6 +99,12 @@ const MainDashboard = () => {
     setDateRange(range);
     const filtered = applyDateFilter(orders, range);
     setFilteredOrders(filtered);
+
+    const today = dayjs().startOf("day");
+    const todayList = filtered.filter((o) =>
+      dayjs(o.createdAt).isAfter(today)
+    );
+    setTodayOrders(todayList);
   };
 
   // Chart Data
@@ -104,7 +120,7 @@ const MainDashboard = () => {
         acc.push({
           date,
           orders: 1,
-          revenue: order.totalAmount
+          revenue: order.totalAmount,
         });
       }
       return acc;
@@ -119,7 +135,7 @@ const MainDashboard = () => {
 
     const pieData = Object.keys(statusCount).map((key) => ({
       name: key,
-      value: statusCount[key]
+      value: statusCount[key],
     }));
 
     setStatusData(pieData);
@@ -128,6 +144,29 @@ const MainDashboard = () => {
   const totalRevenue = filteredOrders.reduce(
     (sum, o) => sum + o.totalAmount,
     0
+  );
+
+  const renderOrderDetails = (order) => (
+    <div style={{ maxWidth: 300 }}>
+      <p><b>Order ID:</b> {order._id}</p>
+      <p><b>User:</b> {order.user?.name || "Guest"}</p>
+      <p><b>Email:</b> {order.user?.email || "N/A"}</p>
+      <p><b>Total Amount:</b> ₹{order.totalAmount}</p>
+      <p><b>Items:</b></p>
+      <ul style={{ paddingLeft: 15 }}>
+        {order.items?.map((item) => (
+          <li key={item._id}>
+            {item.name} - {item.selectedOption} x {item.quantity} (₹{item.price})
+          </li>
+        ))}
+      </ul>
+      {order.deliveryStartDate && (
+        <>
+          <p><b>Delivery:</b> {dayjs(order.deliveryStartDate).format("DD/MM/YYYY")} - {dayjs(order.deliveryEndDate).format("DD/MM/YYYY")}</p>
+        </>
+      )}
+      <p><b>Status:</b> {order.status.toUpperCase()}</p>
+    </div>
   );
 
   const columns = [
@@ -158,6 +197,20 @@ const MainDashboard = () => {
         if (status === "delivered") color = "cyan";
         return <Tag color={color}>{status.toUpperCase()}</Tag>;
       },
+    },
+    {
+      title: "View",
+      render: (_, record) => (
+        <Popover
+          content={renderOrderDetails(record)}
+          title="Order Details"
+          trigger="click"
+        >
+          <Button type="primary" icon={<EyeOutlined />} size="small">
+            View
+          </Button>
+        </Popover>
+      ),
     },
   ];
 
@@ -212,7 +265,7 @@ const MainDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip />
+                <RechartsTooltip />
                 <Line type="monotone" dataKey="orders" stroke="#8884d8" />
                 <Line type="monotone" dataKey="revenue" stroke="#82ca9d" />
               </LineChart>
@@ -237,7 +290,7 @@ const MainDashboard = () => {
                     <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <RechartsTooltip />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -245,15 +298,30 @@ const MainDashboard = () => {
         </Col>
       </Row>
 
-      {/* Recent Orders */}
-      <Card title="Recent Orders" style={{ marginTop: 30 }}>
-        <Table
-          dataSource={filteredOrders.slice(0, 10)}
-          columns={columns}
-          rowKey="_id"
-          pagination={false}
-        />
-      </Card>
+      {/* Orders Tables Side by Side */}
+      <Row gutter={16} style={{ marginTop: 30 }}>
+        <Col xs={24} lg={12}>
+          <Card title="Recent Orders">
+            <Table
+              dataSource={filteredOrders.slice(0, 10)}
+              columns={columns}
+              rowKey="_id"
+              pagination={false}
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={12}>
+          <Card title="Today's Orders">
+            <Table
+              dataSource={todayOrders}
+              columns={columns}
+              rowKey="_id"
+              pagination={false}
+            />
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };

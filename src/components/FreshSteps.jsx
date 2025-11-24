@@ -10,7 +10,19 @@ const steps = [
   {
     id: 1,
     title: "Message Us",
-    desc: "WhatsApp “Hi” to 91509 48143",
+    desc: (
+      <>
+        WhatsApp “Hi” to{" "}
+        <a
+          href="https://wa.me/919150948143"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="step-link"
+        >
+          91509 48143
+        </a>
+      </>
+    ),
     icon: <WhatsAppOutlined />,
     color: "#25D366",
   },

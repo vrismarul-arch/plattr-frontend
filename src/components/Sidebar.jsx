@@ -22,62 +22,68 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     {
       key: "dashboard",
       title: "Dashboard",
-      icon: DashboardOutlined,
-      children: [{ key: "/admin/dashboard", title: "Leads Dashboard", path: "/admin/dashboard" }],
+      icon: <DashboardOutlined />,
+      children: [
+        {
+          key: "/admin/dashboard",
+          title: "Leads Dashboard",
+          path: "/admin/dashboard",
+        },
+      ],
     },
     {
       key: "application",
       title: "Application",
-      icon: AppstoreOutlined,
+      icon: <AppstoreOutlined />,
       children: [
-                { key: "/admin/products", title: "Products", path: "/admin/products" },
-
+        { key: "/admin/products", title: "Products", path: "/admin/products" },
         { key: "/admin/banneradmin", title: "Banners", path: "/admin/banneradmin" },
         { key: "/admin/orders", title: "Orders", path: "/admin/orders" },
+        { key: "/admin/leads", title: "google leads", path: "/admin/leads" },
       ],
-    }
+    },
   ];
 
   return (
     <Sider
       collapsible
       collapsed={collapsed}
-      onCollapse={setCollapsed}
+      trigger={null}
       width={240}
       collapsedWidth={80}
       style={{
         minHeight: "100vh",
-        position: "relative", // changed from fixed to relative
+        background: "#ffffff",
+        borderRight: "1px solid #eee",
         transition: "all 0.3s",
+        position: "sticky",
+        top: 0,
       }}
     >
       <div className="sidebar-header">
-        <img src={logo} alt="Logo" className={collapsed ? "logo-collapsed" : "logo-expanded"} />
+        <img
+          src={logo}
+          alt="Logo"
+          className={collapsed ? "logo-collapsed" : "logo-expanded"}
+        />
       </div>
 
       <Menu
-        theme="light"
         mode="inline"
         selectedKeys={[location.pathname]}
         className="sidebar-menu"
       >
         <div className="menu-title">MAIN MENU</div>
-        {menuItems.map((menu) => {
-          const Icon = menu.icon;
-          return menu.children ? (
-            <Menu.SubMenu key={menu.key} icon={<Icon />} title={menu.title}>
-              {menu.children.map((child) => (
-                <Menu.Item key={child.path}>
-                  <Link to={child.path}>{child.title}</Link>
-                </Menu.Item>
-              ))}
-            </Menu.SubMenu>
-          ) : (
-            <Menu.Item key={menu.key} icon={<Icon />}>
-              <Link to={menu.path}>{menu.title}</Link>
-            </Menu.Item>
-          );
-        })}
+
+        {menuItems.map((menu) => (
+          <Menu.SubMenu key={menu.key} icon={menu.icon} title={menu.title}>
+            {menu.children.map((child) => (
+              <Menu.Item key={child.path}>
+                <Link to={child.path}>{child.title}</Link>
+              </Menu.Item>
+            ))}
+          </Menu.SubMenu>
+        ))}
       </Menu>
 
       <div className="sidebar-footer">

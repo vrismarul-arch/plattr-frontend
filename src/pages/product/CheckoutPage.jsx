@@ -7,18 +7,19 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import "./CheckoutPage.css";
 
-const { RangePicker } = DatePicker;
-
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "", address: "", phone: "", email: "", paymentMethod: "cod",
-    deliveryStartDate: null, deliveryEndDate: null, oneTimeDate: null,
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    paymentMethod: "cod",
+    deliveryDate: null,
   });
 
-  // Prefill from localStorage
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
@@ -38,37 +39,31 @@ const CheckoutPage = () => {
     0
   );
 
-  const isOneTime = cartItems.every(item => item.selectedOption === "oneTime");
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleOneTimeChange = (date) => {
-    setFormData({ ...formData, oneTimeDate: date, deliveryStartDate: date, deliveryEndDate: date });
-  };
-
-  const handleRangeChange = (dates) => {
-    if (!dates) return;
-    setFormData({ ...formData, deliveryStartDate: dates[0], deliveryEndDate: dates[1] });
+  const handleDateChange = (date) => {
+    setFormData(prev => ({ ...prev, deliveryDate: date }));
   };
 
   const handleCheckout = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.address || !formData.phone || !formData.email || !formData.deliveryStartDate) {
+    if (!formData.name || !formData.address || !formData.phone || !formData.email || !formData.deliveryDate) {
       toast.error("Please fill all fields and select delivery date!");
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) { toast.error("Login required!"); return; }
+      if (!token) {
+        toast.error("Login required!");
+        navigate("/login");
+        return;
+      }
 
       const orderData = {
-        deliveryStartDate: formData.deliveryStartDate.format("YYYY-MM-DD"),
-        deliveryEndDate: formData.deliveryEndDate
-          ? formData.deliveryEndDate.format("YYYY-MM-DD")
-          : formData.deliveryStartDate.format("YYYY-MM-DD"),
+        deliveryDate: formData.deliveryDate.format("YYYY-MM-DD"),
         paymentMethod: formData.paymentMethod,
         items: cartItems.map(item => ({
           productId: item._id,
@@ -80,15 +75,18 @@ const CheckoutPage = () => {
         totalAmount,
       };
 
-      await api.post("/orders", orderData, {
+      const response = await api.post("/orders", orderData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      toast.success("Order placed successfully!");
       clearCart();
-      setTimeout(() => navigate("/bookings"), 1800);
+      // Navigate to success page with order id
+      navigate("/checkout-success", { state: { orderId: response.data._id, totalAmount } });
+
     } catch (err) {
-      toast.error(err.response?.data?.message || "Order failed!");
+      console.error(err);
+      // Navigate to failure page
+      navigate("/checkout-failure", { state: { error: err.response?.data?.message || "Order failed!" } });
     }
   };
 
@@ -106,7 +104,6 @@ const CheckoutPage = () => {
     <div className="zomato-checkout-wrapper">
       <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
 
-      {/* Header */}
       <header className="checkout-header">
         <Link to="/cart" className="back-arrow">Back</Link>
         <h1>Checkout</h1>
@@ -159,30 +156,16 @@ const CheckoutPage = () => {
           </div>
 
           <div className="date-section">
-            <label>Delivery Date{!isOneTime && " Range"}</label>
-            {isOneTime ? (
-              <DatePicker
-                value={formData.oneTimeDate}
-                onChange={handleOneTimeChange}
-                disabledDate={d => d && d < dayjs().startOf("day")}
-                format="DD MMM, YYYY"
-                placeholder="Select delivery date"
-                style={{ width: "100%" }}
-                required
-              />
-            ) : (
-              <RangePicker
-                value={formData.deliveryStartDate && formData.deliveryEndDate
-                  ? [formData.deliveryStartDate, formData.deliveryEndDate]
-                  : null}
-                onChange={handleRangeChange}
-                disabledDate={d => d && d < dayjs().startOf("day")}
-                format="DD MMM, YYYY"
-                placeholder={["Start Date", "End Date"]}
-                style={{ width: "100%" }}
-                required
-              />
-            )}
+            <label>Delivery Date</label>
+            <DatePicker
+              value={formData.deliveryDate ? dayjs(formData.deliveryDate) : null}
+              onChange={handleDateChange}
+              disabledDate={d => d && d < dayjs().startOf("day")}
+              format="DD MMM, YYYY"
+              placeholder="Select delivery date"
+              style={{ width: "100%" }}
+              required
+            />
           </div>
 
           <div className="payment-section">
@@ -196,7 +179,7 @@ const CheckoutPage = () => {
           <button type="submit" className="place-order-btn">
             Place Order • ₹{totalAmount}
           </button>
-         </form>
+        </form>
       </div>
     </div>
   );

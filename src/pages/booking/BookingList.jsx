@@ -1,38 +1,34 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 import dayjs from "dayjs";
+import { FaCalendarAlt, FaDollarSign, FaBoxOpen, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import "./BookingList.css";
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);
+};
 
 export default function BookingList() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState(null); // Track which order is expanded
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
     const loadBookings = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
         const res = await api.get("/orders/my-orders", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const backendBase = api.defaults.baseURL.replace("/api", "");
-
         const formatted = res.data.map((order, orderIndex) => ({
           ...order,
-          uid: `booking-${order._id}-${orderIndex}`,
-          items: order.items.map((item, itemIndex) => {
-            let imageUrl = "/placeholder.png";
-            if (item.image) {
-              if (item.image.startsWith("http")) imageUrl = item.image;
-              else imageUrl = `${backendBase}${item.image}`;
-            }
-            return {
-              ...item,
-              uid: `item-${item.productId}-${itemIndex}`,
-              image: imageUrl,
-            };
-          }),
+          uid: order.orderId || `booking-${order._id}-${orderIndex}`,
         }));
 
         setBookings(formatted);
@@ -46,49 +42,84 @@ export default function BookingList() {
     loadBookings();
   }, []);
 
-  if (loading) return <p className="loading">Loading bookings...</p>;
-  if (bookings.length === 0) return <p className="empty-booking">No bookings found.</p>;
+  if (loading) return <p className="loading">Loading your order history...</p>;
+
+  if (!bookings.length)
+    return (
+      <div className="empty-state">
+        <FaBoxOpen size={48} className="empty-icon" />
+        <p className="empty-booking">You haven't placed any orders yet.</p>
+      </div>
+    );
+
+  const toggleExpand = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
 
   return (
     <div className="booking-container">
-      <h1 className="booking-title">My Bookings</h1>
+      <h1 className="booking-title">Order History</h1>
       <div className="booking-list">
-        {bookings.map((order) => (
-          <div className="booking-card" key={order.uid}>
-            <div className="booking-header">
-              <h3>Booking {order.orderId}</h3> {/* Use backend orderId */}
-              <span className={`status ${order.status.toLowerCase()}`}>
-                {order.status.toUpperCase()}
-              </span>
-            </div>
-
-            <p>
-              <strong>Delivery:</strong>{" "}
-              {dayjs(order.deliveryStartDate).format("DD MMM")} →{" "}
-              {dayjs(order.deliveryEndDate).format("DD MMM")}
-            </p>
-
-            <p>
-              <strong>Total Amount:</strong> ₹{order.totalAmount}
-            </p>
-
-            <div className="booking-items">
-              {order.items.map((item) => (
-                <div className="booking-item" key={item.uid}>
-                  {/* <img src={item.image} alt={item.name} /> */}
-                  <div>
-                    <p>{item.name}</p>
-                    <small>
-                      {item.selectedOption} — Qty: {item.quantity}
-                    </small>
-                  </div>
+        {bookings.map((order) => {
+          const isExpanded = expandedOrder === order.orderId;
+          return (
+            <div className="booking-card" key={order.uid}>
+              {/* Header */}
+              <div className="booking-header" onClick={() => toggleExpand(order.orderId)} style={{ cursor: "pointer" }}>
+                <div className="order-id-info">
+                  <span className="label">Order ID</span>
+                  <h3 className="id-value">{order.orderId}</h3>
                 </div>
-              ))}
-            </div>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span className={`status-badge status-${order.status.toLowerCase()}`}>
+                    {order.status.toUpperCase()}
+                  </span>
+                  {isExpanded ? <FaChevronUp style={{ marginLeft: "8px" }} /> : <FaChevronDown style={{ marginLeft: "8px" }} />}
+                </div>
+              </div>
 
-            <button className="view-btn">View Details</button>
-          </div>
-        ))}
+              {isExpanded && (
+                <>
+                  <hr className="divider" />
+                  {/* Summary Row */}
+                  <div className="booking-summary-row">
+                    <div className="summary-item">
+                      <FaCalendarAlt className="summary-icon" />
+                      <span className="summary-label">Delivery Window</span>
+                      <p className="summary-value">
+                        {dayjs(order.deliveryStartDate).format("MMM DD")} – {dayjs(order.deliveryEndDate).format("MMM DD, YYYY")}
+                      </p>
+                    </div>
+                    <div className="summary-item">
+                      <FaDollarSign className="summary-icon" />
+                      <span className="summary-label">Total Paid</span>
+                      <p className="summary-value amount">{formatCurrency(order.totalAmount)}</p>
+                    </div>
+                  </div>
+
+                  <hr className="divider" />
+
+                  {/* Items Details */}
+                  <div className="booking-items-expanded">
+                    <h4>Items:</h4>
+                    {order.items.map((item) => (
+                      <div className="item-detail" key={item._id} style={{ display: "flex", marginBottom: "10px" }}>
+                        <img src={item.image} alt={item.name} className="item-image-thumb" style={{ width: 60, height: 60, marginRight: 12 }} />
+                        <div>
+                          <strong>{item.name}</strong>
+                          <p>Qty: {item.quantity}</p>
+                          <p>Option: {item.selectedOption}</p>
+                          <p>Price: {formatCurrency(item.price)}</p>
+                          {item.fullProduct?.desc && <p>Description: {item.fullProduct.desc}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

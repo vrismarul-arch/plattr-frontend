@@ -3,65 +3,77 @@ import api from "../api/api.jsx";
 import toast from "react-hot-toast";
 
 const CartContext = createContext();
-
 export const useCart = () => useContext(CartContext);
+
+// Helper for safe price retrieval
+const getPriceSafely = (prices, optionKey, defaultKey = "oneTime") => {
+  if (prices && prices[optionKey] !== undefined) return prices[optionKey];
+  if (prices && prices[defaultKey] !== undefined) return prices[defaultKey];
+  return 0;
+};
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);        // Initial load
-  const [isUpdating, setIsUpdating] = useState(false); // For any cart changes
-  const userId = "guest"; // Replace with real user ID later
+  const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Fetch cart on mount
+  // Check if user is logged in
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userId = user?._id || null; // null if not logged in
+
+  // Fetch cart
   useEffect(() => {
     const fetchCart = async () => {
+      if (!userId) {
+        setCartItems([]); // guest: empty cart
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const res = await api.get(`/cart?userId=${userId}`);
         setCartItems(res.data.items || []);
       } catch (err) {
-        console.error("Failed to fetch cart:", err);
-        toast.error("Could not load cart");
+        console.error(err);
+        toast.error("Failed to load cart");
       } finally {
         setLoading(false);
       }
     };
-
     fetchCart();
-  }, []);
+  }, [userId]);
 
-  // Helper to handle loading state + error rollback
   const performUpdate = async (optimisticUpdate, apiCall) => {
     setIsUpdating(true);
     const previousState = cartItems;
-
-    // Apply optimistic UI
     optimisticUpdate();
-
     try {
-      await apiCall();
+      if (userId) await apiCall(); // only call API if logged in
     } catch (err) {
-      console.error("Cart update failed:", err);
-      toast.error("Update failed, try again");
-      setCartItems(previousState); // Rollback
+      console.error(err);
+      toast.error("Update failed");
+      setCartItems(previousState);
     } finally {
       setIsUpdating(false);
     }
   };
 
-  // Add to Cart
   const addToCart = async (product, optionKey = "oneTime") => {
-    const price = product.prices[optionKey];
+    const price = getPriceSafely(product.prices, optionKey);
 
     performUpdate(
       () => {
         setCartItems((prev) => {
-          const exists = prev.find((item) => item.productId === product._id);
+          const exists = prev.find(
+            (i) => i.productId === product._id && i.selectedOption === optionKey
+          );
           if (exists) {
-            return prev.map((item) =>
-              item.productId === product._id
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
+            return prev.map((i) =>
+              i.productId === product._id && i.selectedOption === optionKey
+                ? { ...i, quantity: i.quantity + 1 }
+                : i
             );
           }
           return [
@@ -69,85 +81,65 @@ export const CartProvider = ({ children }) => {
             {
               ...product,
               productId: product._id,
-              quantity: 1,
               selectedOption: optionKey,
               selectedOptionPrice: price,
+              quantity: 1,
             },
           ];
         });
-        toast.success("Added to cart!");
+        toast.success("Added to cart");
       },
-      () => api.post("/cart/add", { userId, product: { ...product, optionKey } })
+      () =>
+        api.post("/cart/add", {
+          userId,
+          product,
+          optionKey,
+        })
     );
   };
 
-  // Remove from Cart
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (_id) => {
     performUpdate(
-      () => {
-        setCartItems((prev) => prev.filter((item) => item.productId !== productId));
-        toast.success("Removed from cart");
-      },
-      () => api.post("/cart/remove", { userId, productId })
+      () => setCartItems((prev) => prev.filter((i) => i._id !== _id)),
+      () => api.post("/cart/remove", { userId, _id })
     );
   };
 
-  // Clear Cart
   const clearCart = async () => {
     performUpdate(
-      () => {
-        setCartItems([]);
-        toast.success("Cart cleared");
-      },
+      () => setCartItems([]),
       () => api.post("/cart/clear", { userId })
     );
   };
 
-  // Update Quantity
-  const updateCartItemQuantity = async (productId, quantity) => {
-    if (quantity < 1) return;
+  const updateCartItemQuantity = async (_id, quantity) => {
+    if (quantity < 1) return removeFromCart(_id);
 
     performUpdate(
-      () => {
+      () =>
         setCartItems((prev) =>
-          prev.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item
-          )
-        );
-        toast.success("Quantity updated");
-      },
-      () => api.post("/cart/update", { userId, productId, quantity })
+          prev.map((i) => (i._id === _id ? { ...i, quantity } : i))
+        ),
+      () => api.post("/cart/update", { userId, _id, quantity })
     );
   };
 
-  // Update Selected Plan (oneTime, threeDays, etc.)
-  const updateCartItemPriceOption = async (productId, optionKey) => {
-    const item = cartItems.find((i) => i.productId === productId);
-    if (!item) return;
+  const updateCartItemPriceOption = async (_id, optionKey) => {
+    const item = cartItems.find((i) => i._id === _id);
+    const newPrice = getPriceSafely(item?.prices, optionKey);
 
-    const newPrice = item.prices[optionKey];
+    if (!item || newPrice === undefined) return;
 
     performUpdate(
-      () => {
+      () =>
         setCartItems((prev) =>
           prev.map((i) =>
-            i.productId === productId
-              ? {
-                  ...i,
-                  selectedOption: optionKey,
-                  selectedOptionPrice: newPrice,
-                }
+            i._id === _id
+              ? { ...i, selectedOption: optionKey, selectedOptionPrice: newPrice }
               : i
           )
-        );
-        toast.success("Plan changed");
-      },
-      () =>
-        api.post("/cart/update", {
-          userId,
-          productId,
-          selectedOption: optionKey,
-        })
+        ),
+      () => api.post("/cart/update", { userId, _id, selectedOption: optionKey })
     );
   };
 
@@ -162,6 +154,7 @@ export const CartProvider = ({ children }) => {
         clearCart,
         updateCartItemQuantity,
         updateCartItemPriceOption,
+        userLoggedIn: !!userId, // new flag for UI logic
       }}
     >
       {children}

@@ -5,6 +5,12 @@
   min-height: 100vh;
   font-family: 'Poppins', sans-serif;
 }
+.item-note {
+  color: #d9534f; /* red color */
+  font-size: 14px;
+  margin: 5px 0;
+  font-weight: 500;
+}
 
 /* Header */
 .cart-header {
