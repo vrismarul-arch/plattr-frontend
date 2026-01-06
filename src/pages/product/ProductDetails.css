@@ -1,0 +1,514 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ==========================================================
+   MOBILE FIRST BASE
+========================================================== */
+
+/* Hide desktop by default */
+.pd-desktop-grid {
+  display: none;
+}
+
+.plattr-mobile {
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* ---------------- TOP BAR ---------------- */
+
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  height: 32px;
+}
+
+.back-arrow {
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.right-icons {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.cart-icon {
+  position: relative;
+  font-size: 24px;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff3b30;
+  color: white;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-icon {
+  font-size: 24px;
+}
+
+/* ---------------- PRODUCT IMAGE ---------------- */
+
+.product-image-container {
+  margin-top: 56px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.product-img {
+  width: 100%;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------------- ADD TO CART BAR ---------------- */
+
+.add-to-cart-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 16px 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.atc-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+}
+
+.atc-text .price {
+  margin-left: 8px;
+  color: #000;
+}
+
+.atc-arrow {
+  font-size: 28px;
+  font-weight: 300;
+}
+
+/* ---------------- PRODUCT INFO ---------------- */
+
+.product-info {
+  padding: 24px 20px 16px;
+}
+
+.product-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.product-desc {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* ---------------- FULL CONTENT WRAPPER ---------------- */
+
+.full-content {
+  padding: 0 20px 120px;
+}
+
+/* ---------------- PRICING ---------------- */
+
+.pd-pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.price-card {
+  background: #f0fff4;
+  border: 1.5px solid #86efac;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.price-label {
+  font-size: 13px;
+  color: #16a34a;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.price-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #166534;
+}
+
+/* ---------------- WEEKLY PLANS ---------------- */
+
+.pd-weekly-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 32px 0 16px;
+}
+
+.weekly-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weekly-card {
+  background: #f9f9f9;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  /* display: flex; */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.weekly-card.highlight {
+  background: linear-gradient(135deg, #fff1f0 0%, #ffe4e1 100%);
+  border-color: #f87171;
+}
+
+.best-tag {
+  background: #dc2626;
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+/* ---------------- INGREDIENTS ---------------- */
+
+.pd-ingredients-new h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 32px 0 16px;
+}
+
+.ingredients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ing-item {
+  background: #f8f9fa;
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+/* ==========================================================
+   SMALL MOBILE TWEAKS
+========================================================== */
+
+@media (max-width: 480px) {
+  .product-image-container {
+    padding: 16px;
+  }
+  .full-content {
+    padding: 0 16px 120px;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-title {
+    font-size: 22px;
+  }
+  .product-info,
+  .add-to-cart-bar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .atc-text {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 320px) {
+  .top-bar {
+    height: 50px;
+    padding: 0 12px;
+  }
+  .right-icons {
+    gap: 12px;
+  }
+  .product-image-container {
+    margin-top: 50px;
+  }
+}
+
+/* ==========================================================
+   DESKTOP (>=768px)
+========================================================== */
+
+@media (min-width: 768px) {
+  .pd-desktop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    background: #fff;
+  }
+
+  .plattr-mobile {
+    display: none;
+  }
+
+  /* Left Image Panel */
+  .pd-image-container {
+    position: relative;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .pd-main-img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .pd-back-desktop {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Right Content Panel */
+  .pd-content-pro {
+    padding: 60px 80px;
+    overflow-y: auto;
+  }
+
+  .pd-header-pro {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .pd-title {
+    font-size: 36px;
+    font-weight: 800;
+  }
+
+  .pd-stock-badge {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .pd-out-badge {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .pd-desc {
+    font-size: 18px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 40px;
+  }
+
+  /* Desktop Pricing */
+  .pricing-grid-pro {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  .price-box {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .price-box .label {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .price-box .price {
+    font-size: 32px;
+    font-weight: 800;
+    color: #111;
+  }
+
+  /* Desktop Weekly Plans */
+  .weekly-plans h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .weekly-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .weekly-card {
+    background: #f9f9f9;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    transition: 0.3s;
+  }
+
+  .weekly-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .weekly-card.best-value {
+    border-color: #f87171;
+    background: linear-gradient(135deg, #fff1f0, #ffe4e1);
+  }
+
+  .best-badge {
+    background: #dc2626;
+    color: white;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .days {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .plan {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .wprice {
+    font-size: 28px;
+    font-weight: 800;
+    margin-top: 12px;
+  }
+
+  .wprice.highlight {
+    color: #dc2626;
+  }
+
+  /* Desktop Ingredients */
+  .ingredients-section h3 {
+    font-size: 24px;
+    margin: 40px 0 20px;
+  }
+
+  .ing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .ing-item-pro {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+  }
+
+  /* Desktop CTA */
+  .desktop-cta {
+    margin-top: 40px;
+    background:linear-gradient(#d9aa6a,#b97b0f);
+    color: white;
+    border: none;
+    padding: 18px 32px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.3s ease;
+  }
+
+  .desktop-cta:hover {
+   background:linear-gradient(#d9aa6a,#b67f22);
+  }
+}
+/* Add this to your ProductDetails.css or equivalent stylesheet */
+.selected-card {
+  /* Example styles for visual selection */
+  border: 2px solid #007bff; /* Use your brand color */
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+  transform: scale(1.02); /* Slight scale for emphasis */
+}
+
+/* Ensure the cards are clickable */
+.price-box, .weekly-card {
+  cursor: pointer;
+}

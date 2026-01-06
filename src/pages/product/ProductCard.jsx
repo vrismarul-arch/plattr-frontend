@@ -8,6 +8,7 @@ import LoadingScreen from "../../components/LoadingScreen.jsx";
 const ProductCard = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null); // ⭐ collapse state
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
@@ -21,26 +22,21 @@ const ProductCard = () => {
 
         const formattedProducts = res.data.map((item) => ({
           ...item,
-
           img: item.img || "/placeholder.png",
 
-          // 🟢 MAP PRICES SAFELY
+          // PRICE STRUCTURE
           prices: {
             oneTime: item.prices?.oneTime || 0,
             monthly: item.prices?.monthly || 0,
-
             weekly3_MWF: item.prices?.weekly3?.monWedFri || 0,
             weekly3_TTS: item.prices?.weekly3?.tueThuSat || 0,
-
             weekly6: item.prices?.weekly6?.monToSat || 0,
 
-            // NEW PACK PRICES
             threeDays: item.prices?.threeDays || 0,
             sevenDays: item.prices?.sevenDays || 0,
             thirtyDays: item.prices?.thirtyDays || 0,
           },
 
-          // 🟢 NEW FIELDS FROM BACKEND
           totalQuantity: item.totalQuantity || "",
           ingredients: item.ingredients || [],
         }));
@@ -72,16 +68,10 @@ const ProductCard = () => {
   };
 
   // ================================
-  // LOADING + EMPTY STATES
+  // LOADING
   // ================================
-  if (loading) return <LoadingScreen text="Loading your delicious meals..." />;
+  if (loading) return <LoadingScreen text="Loading meals..." />;
 
-  if (!products.length)
-    return <p className="loading-text">No products found.</p>;
-
-  // ================================
-  // RENDER UI
-  // ================================
   return (
     <div className="food-section">
       <h2 className="food-heading">
@@ -94,34 +84,27 @@ const ProductCard = () => {
           <div
             key={item._id}
             className="food-card-modern clickable-card"
-            onClick={() => handleOrder(item)}
-            role="button"
-            tabIndex={0}
+          onClick={() => navigate(`/product/${item._id}`)}
           >
-            {/* IMAGE + RATING */}
+            {/* IMAGE */}
             <div className="food-image-wrap">
               <img src={item.img} alt={item.name} className="food-image" />
-              <div className="food-rating">⭐ {item.rating}</div>
             </div>
 
-            {/* PRODUCT DETAILS */}
-            <div className="food-details">
+            {/* DETAILS */}
+            <div className="food-details">              <div className="food-rating-badge">⭐ {item.rating}</div>
+
               <h3 className="food-title">{item.name}</h3>
               <p className="food-desc">{item.desc}</p>
 
-              {/* ============================
-                 TOTAL QUANTITY
-              =============================== */}
               {item.totalQuantity && (
                 <p className="food-qty">
                   <b>Quantity:</b> {item.totalQuantity}
                 </p>
               )}
 
-              {/* ============================
-                 INGREDIENT LIST
-              =============================== */}
-              {item.ingredients.length > 0 && (
+              {/* INGREDIENT LIST */}
+              {/* {item.ingredients.length > 0 && (
                 <div className="ingredient-box">
                   <b>Ingredients:</b>
                   <ul className="ingredient-list">
@@ -132,58 +115,70 @@ const ProductCard = () => {
                     ))}
                   </ul>
                 </div>
-              )}
+              )} */}
 
-              {/* ============================
-                 PRICE OPTIONS
-              =============================== */}
-              <div className="food-price-options">
-
-                <div className="price-chip">
-                  One-Time <b>₹{item.prices.oneTime}</b>
+              {/* ===========================
+                    COLLAPSIBLE PRICE PLANS
+                ============================ */}
+              {/* <div className="price-collapse">
+                <div
+                  className="price-collapse-header"
+                  onClick={() =>
+                    setExpanded(expanded === item._id ? null : item._id)
+                  }
+                >
+                  <span>Price Plans</span>
+                  <span className="arrow">
+                    {expanded === item._id ? "▲" : "▼"}
+                  </span>
                 </div>
 
-                <div className="price-chip">
-                  Monthly <b>₹{item.prices.monthly}</b>
-                </div>
+                {expanded === item._id && (
+                  <div className="price-collapse-content">
+                    <div className="price-row">
+                      <span>One Time</span>
+                      <b>₹{item.prices.oneTime}</b>
+                    </div>
 
-                <div className="price-chip">
-                  6 Days (Mon–Sat) <b>₹{item.prices.weekly6}</b>
-                </div>
+                    <div className="price-row">
+                      <span>Monthly</span>
+                      <b>₹{item.prices.monthly}</b>
+                    </div>
 
-                <div className="price-chip">
-                  3 Days (MWF) <b>₹{item.prices.weekly3_MWF}</b>
-                </div>
+                    <div className="price-subtitle">Weekly 3 Days</div>
 
-                <div className="price-chip">
-                  3 Days (TTS) <b>₹{item.prices.weekly3_TTS}</b>
-                </div>
+                    <div className="price-row">
+                      <span>Mon–Wed–Fri</span>
+                      <b>₹{item.prices.weekly3_MWF}</b>
+                    </div>
 
-                {/* NEW PACKS */}
-                <div className="price-chip">
-                  3 Days Pack <b>₹{item.prices.threeDays}</b>
-                </div>
+                    <div className="price-row">
+                      <span>Tue–Thu–Sat</span>
+                      <b>₹{item.prices.weekly3_TTS}</b>
+                    </div>
 
-                <div className="price-chip">
-                  7 Days Pack <b>₹{item.prices.sevenDays}</b>
-                </div>
+                    <div className="price-subtitle">Weekly 6 Days</div>
+                    <div className="price-row">
+                      <span>Mon–Sat</span>
+                      <b>₹{item.prices.weekly6}</b>
+                    </div>
 
-                <div className="price-chip">
-                  30 Days Pack <b>₹{item.prices.thirtyDays}</b>
-                </div>
-              </div>
+
+                  </div>
+                )}
+              </div> */}
             </div>
 
-            {/* ADD TO CART BUTTON */}
-            <button
+            {/* ADD TO CART */}
+            {/* <button
               className="food-order-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 handleOrder(item);
               }}
             >
-              Add To Cart
-            </button>
+              Add to Cart
+            </button> */}
           </div>
         ))}
       </div>

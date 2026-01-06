@@ -19,28 +19,23 @@ const CartPage = () => {
 
   const navigate = useNavigate();
   
-  // --- Price calculation helper function (Robust Check on state) ---
-  // Priority: 1. selectedOptionPrice (persisted) 2. oneTime price 3. 0
+  // --- Price calculation helper function ---
   const getItemPrice = (item) => {
-      if (item.selectedOptionPrice !== undefined) {
-          return item.selectedOptionPrice;
-      }
-      if (item.prices.oneTime !== undefined) {
-          return item.prices.oneTime;
-      }
-      return 0;
-  }
-  // --------------------------------------------------------
+    if (item.selectedOptionPrice !== undefined) {
+      return item.selectedOptionPrice;
+    }
+    if (item.prices?.oneTime !== undefined) {
+      return item.prices.oneTime;
+    }
+    return 0;
+  };
 
   const totalAmount = cartItems.reduce(
-    (sum, item) => {
-      const price = getItemPrice(item);
-      return sum + (price * item.quantity);
-    },
+    (sum, item) => sum + getItemPrice(item) * item.quantity,
     0
   );
 
-  if (loading) { 
+  if (loading) {
     return (
       <div className="cart-full-loader">
         <div className="loader-spinner"></div>
@@ -59,15 +54,10 @@ const CartPage = () => {
     );
   }
 
-  const getItemTotalPrice = (item) => {
-    const price = getItemPrice(item);
-    return (price * item.quantity).toFixed(2);
-  }
-  
-  const getOptionPrice = (item) => {
-    const price = getItemPrice(item);
-    return price.toFixed(2);
-  }
+  const getItemTotalPrice = (item) =>
+    (getItemPrice(item) * item.quantity).toFixed(2);
+
+  const getOptionPrice = (item) => getItemPrice(item).toFixed(2);
 
   return (
     <div className="zomato-cart-container">
@@ -78,10 +68,14 @@ const CartPage = () => {
           <ArrowLeftOutlined style={{ marginRight: "5px" }} />
         </Link>
         <h1>My Cart ({cartItems.length})</h1>
-        <button onClick={clearCart} className="clear-cart-btn" disabled={isUpdating}>
-          <DeleteOutlined style={{ marginRight: "5px" }} />
-          Clear Cart
-        </button>
+    <button
+      onClick={clearCart}
+      className="clear-cart-btn"
+      disabled={isUpdating}
+    >
+      <DeleteOutlined style={{ marginRight: "5px" }} />
+      Clear Cart
+    </button>
       </header>
 
       <div className="cart-body">
@@ -90,10 +84,14 @@ const CartPage = () => {
             <div key={item._id} className="cart-item">
               <img src={item.img} alt={item.name} className="item-image" />
               <div className="item-details">
+                
                 <div className="item-header">
                   <h3 className="item-name">{item.name}</h3>
-                  {/* Uses item._id for removal */}
-                  <button onClick={() => removeFromCart(item._id)} className="remove-btn" disabled={isUpdating}>
+                  <button
+                    onClick={() => removeFromCart(item._id)}
+                    className="remove-btn"
+                    disabled={isUpdating}
+                  >
                     ×
                   </button>
                 </div>
@@ -101,41 +99,83 @@ const CartPage = () => {
                 <p className="item-desc">{item.desc}</p>
 
                 {!item.deliverable && (
-                  <p className="item-note">
-                    ⚠️ Not deliverable on certain days
-                  </p>
+                  <p className="item-note">⚠️ Not deliverable on Sunday</p>
                 )}
-                
+
                 <p className="item-current-price">
-                    Plan Price: ₹{getOptionPrice(item)}
+                  Plan Price: ₹{getOptionPrice(item)}
                 </p>
 
+                {/* FIXED SELECT: NO OBJECT RENDERING */}
                 <select
                   className="plan-select"
-                  value={item.selectedOption || "oneTime"} 
-                  // Uses item._id for option update
-                  onChange={(e) => updateCartItemPriceOption(item._id, e.target.value)}
+                  value={item.selectedOption || "oneTime"}
+                  onChange={(e) =>
+                    updateCartItemPriceOption(item._id, e.target.value)
+                  }
                   disabled={isUpdating}
                 >
-                  {Object.keys(item.prices || {}).map((key) => (
-                    <option key={key} value={key}>
-                      {key} – ₹{item.prices[key]}
+                  {/* One-time */}
+                  {item.prices?.oneTime !== undefined && (
+                    <option value="oneTime">
+                      One-Time – ₹{item.prices.oneTime}
                     </option>
-                  ))}
+                  )}
+
+                  {/* Monthly */}
+                  {item.prices?.monthly !== undefined && (
+                    <option value="monthly">
+                      Monthly – ₹{item.prices.monthly}
+                    </option>
+                  )}
+
+                  {/* Weekly 3 days */}
+                  {item.prices?.weekly3?.monWedFri !== undefined && (
+                    <option value="weekly3_monWedFri">
+                      Mon–Wed–Fri – ₹{item.prices.weekly3.monWedFri}
+                    </option>
+                  )}
+
+                  {item.prices?.weekly3?.tueThuSat !== undefined && (
+                    <option value="weekly3_tueThuSat">
+                      Tue–Thu–Sat – ₹{item.prices.weekly3.tueThuSat}
+                    </option>
+                  )}
+
+                  {/* Weekly 6 days */}
+                  {item.prices?.weekly6?.monToSat !== undefined && (
+                    <option value="weekly6_monToSat">
+                      Mon–Sat – ₹{item.prices.weekly6.monToSat}
+                    </option>
+                  )}
                 </select>
 
                 <div className="item-footer">
                   <div className="quantity-box">
-                    {/* Uses item._id for quantity update */}
-                    <button onClick={() => updateCartItemQuantity(item._id, item.quantity - 1)} disabled={isUpdating}>-</button>
+                    <button
+                      onClick={() =>
+                        updateCartItemQuantity(item._id, item.quantity - 1)
+                      }
+                      disabled={isUpdating}
+                    >
+                      -
+                    </button>
                     <span>{item.quantity}</span>
-                    {/* Uses item._id for quantity update */}
-                    <button onClick={() => updateCartItemQuantity(item._id, item.quantity + 1)} disabled={isUpdating}>+</button>
+                    <button
+                      onClick={() =>
+                        updateCartItemQuantity(item._id, item.quantity + 1)
+                      }
+                      disabled={isUpdating}
+                    >
+                      +
+                    </button>
                   </div>
+
                   <div className="item-total-price">
                     ₹{getItemTotalPrice(item)}
                   </div>
                 </div>
+
               </div>
             </div>
           ))}
@@ -143,29 +183,37 @@ const CartPage = () => {
 
         <div className="bill-summary">
           <h3>Bill Details</h3>
+
           <div className="bill-row subtotal-row">
             <span>Subtotal (before delivery)</span>
             <span>₹{totalAmount.toFixed(2)}</span>
           </div>
+
           <div className="bill-row delivery-row">
             <span>Delivery Fee</span>
             <span className="free">FREE</span>
           </div>
+
           <div className="bill-total">
             <strong>To Pay</strong>
             <strong>₹{totalAmount.toFixed(2)}</strong>
           </div>
-          <button onClick={() => navigate("/checkout")} className="checkout-button" disabled={isUpdating || !cartItems.length}>
+
+          <button
+            onClick={() => navigate("/checkout")}
+            className="checkout-button"
+            disabled={isUpdating || !cartItems.length}
+          >
             {isUpdating ? "Updating Cart..." : "Proceed to Checkout"}
           </button>
         </div>
       </div>
-      
+
       {isUpdating && (
-          <div className="cart-full-loader overlay">
-            <div className="loader-spinner"></div>
-            <p>Updating cart details...</p>
-          </div>
+        <div className="cart-full-loader overlay">
+          <div className="loader-spinner"></div>
+          <p>Updating cart details...</p>
+        </div>
       )}
     </div>
   );

@@ -31,6 +31,8 @@ const MainDashboard = React.lazy(() => import("../pages/admin/MainDashboard"));
 const AdminOrders = React.lazy(() => import("../pages/admin/AdminOrders"));
 const CheckoutFailure = React.lazy(() => import("../pages/result/CheckoutFailure"));
 const CheckoutSuccess = React.lazy(() => import("../pages/result/CheckoutSuccess"));
+const Product = React.lazy(() => import("../pages/product/Product"));
+
 // (Note: OrderStatus is commented out in your original code, so it's omitted here)
 
 
@@ -75,6 +77,12 @@ const router = createBrowserRouter([
       { path: "leads", element: <AdminLeads /> }, // Lazy loaded
     ],
   },
+
+  {
+  path: "/product/:id",
+  element: <Product />,
+},
+
   {
     path: "/cart",
     element: <Cart />, // Lazy loaded

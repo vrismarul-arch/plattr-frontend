@@ -1,0 +1,43 @@
+.price-option-box {
+  position: relative;
+  width: 110px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #ffe8ff;
+  border: 1px solid #f3c7ff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.price-option-box:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.price-tag {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff007f;
+  color: #fff;
+  padding: 3px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+.opt-weight {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.opt-price {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 3px 0;
+}
+
+.opt-perunit {
+  font-size: 12px;
+  color: #c300c3;
+}
