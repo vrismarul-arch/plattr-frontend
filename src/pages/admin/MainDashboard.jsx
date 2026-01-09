@@ -10,6 +10,8 @@ import {
   DatePicker,
   Popover,
   Button,
+  Calendar,
+  Drawer,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -37,6 +39,37 @@ import "./dashboard.css";
 const { RangePicker } = DatePicker;
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
+/* ================= PLAN → WEEKDAYS ================= */
+const PLAN_DAYS_MAP = {
+  weekly3_MWF: [1, 3, 5], // Mon Wed Fri
+  weekly3_TTS: [2, 4, 6], // Tue Thu Sat
+  weekly6: [1, 2, 3, 4, 5, 6], // Mon–Sat
+};
+
+/* ================= DELIVERY DATE GENERATOR ================= */
+const generateDeliveryDatesFromRange = (order) => {
+  const start = order.deliveryStartDate;
+  const end = order.deliveryEndDate;
+  const plan = order.items?.[0]?.selectedOption;
+
+  if (!start || !end || !PLAN_DAYS_MAP[plan]) return [];
+
+  const allowedDays = PLAN_DAYS_MAP[plan];
+  const dates = [];
+
+  let current = dayjs(start);
+  const endDate = dayjs(end);
+
+  while (current.diff(endDate, "day") <= 0) {
+    if (allowedDays.includes(current.day())) {
+      dates.push(current.format("YYYY-MM-DD"));
+    }
+    current = current.add(1, "day");
+  }
+
+  return dates;
+};
+
 const MainDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -44,101 +77,89 @@ const MainDashboard = () => {
   const [todayOrders, setTodayOrders] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [statusData, setStatusData] = useState([]);
-  const [dateRange, setDateRange] = useState(null);
+  const [calendarDate, setCalendarDate] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedDateOrders, setSelectedDateOrders] = useState([]);
 
-  // Fetch Products
+  /* ================= FETCH DATA ================= */
+  useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+  }, []);
+
   const fetchProducts = async () => {
     try {
       const res = await api.get("/products");
       setProducts(res.data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch products!");
+    } catch {
+      toast.error("Failed to fetch products");
     }
   };
 
-  // Fetch Orders
   const fetchOrders = async () => {
     try {
       const res = await api.get("/orders");
       setOrders(res.data);
       setFilteredOrders(res.data);
 
-      const today = dayjs().startOf("day");
-      const todayList = res.data.filter((o) =>
-        dayjs(o.createdAt).isAfter(today)
+      const today = dayjs().format("YYYY-MM-DD");
+      setTodayOrders(
+        res.data.filter((o) =>
+          generateDeliveryDatesFromRange(o).includes(today)
+        )
       );
-      setTodayOrders(todayList);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch orders!");
+    } catch {
+      toast.error("Failed to fetch orders");
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-  }, []);
-
-  // Date Filter
-  const applyDateFilter = (orders, range) => {
-    if (!range) return orders;
+  /* ================= DATE FILTER (CREATED DATE) ================= */
+  const onDateChange = (range) => {
+    if (!range) {
+      setFilteredOrders(orders);
+      return;
+    }
 
     const [start, end] = range;
-
-    return orders.filter((order) => {
-      const orderDate = dayjs(order.createdAt);
-      return (
-        orderDate.isAfter(start.startOf("day")) &&
-        orderDate.isBefore(end.endOf("day"))
-      );
-    });
-  };
-
-  const onDateChange = (range) => {
-    setDateRange(range);
-    const filtered = applyDateFilter(orders, range);
-    setFilteredOrders(filtered);
-
-    const today = dayjs().startOf("day");
-    const todayList = filtered.filter((o) =>
-      dayjs(o.createdAt).isAfter(today)
+    setFilteredOrders(
+      orders.filter(
+        (o) =>
+          dayjs(o.createdAt).diff(start.startOf("day")) >= 0 &&
+          dayjs(o.createdAt).diff(end.endOf("day")) <= 0
+      )
     );
-    setTodayOrders(todayList);
   };
 
-  // Chart Data
+  /* ================= CHART DATA ================= */
   useEffect(() => {
-    const lineData = filteredOrders.reduce((acc, order) => {
-      const date = new Date(order.createdAt).toLocaleDateString();
-      const index = acc.findIndex((item) => item.date === date);
+    const lineData = [];
+    const statusCount = {};
 
-      if (index >= 0) {
-        acc[index].orders += 1;
-        acc[index].revenue += order.totalAmount;
+    filteredOrders.forEach((o) => {
+      const date = dayjs(o.createdAt).format("DD MMM");
+      const idx = lineData.findIndex((d) => d.date === date);
+
+      if (idx >= 0) {
+        lineData[idx].orders += 1;
+        lineData[idx].revenue += o.totalAmount;
       } else {
-        acc.push({
+        lineData.push({
           date,
           orders: 1,
-          revenue: order.totalAmount,
+          revenue: o.totalAmount,
         });
       }
-      return acc;
-    }, []);
+
+      statusCount[o.status] = (statusCount[o.status] || 0) + 1;
+    });
 
     setChartData(lineData);
-
-    const statusCount = filteredOrders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    const pieData = Object.keys(statusCount).map((key) => ({
-      name: key,
-      value: statusCount[key],
-    }));
-
-    setStatusData(pieData);
+    setStatusData(
+      Object.keys(statusCount).map((k) => ({
+        name: k,
+        value: statusCount[k],
+      }))
+    );
   }, [filteredOrders]);
 
   const totalRevenue = filteredOrders.reduce(
@@ -146,69 +167,75 @@ const MainDashboard = () => {
     0
   );
 
-  const renderOrderDetails = (order) => (
-    <div style={{ maxWidth: 300 }}>
-      <p><b>Order ID:</b> {order._id}</p>
-      <p><b>User:</b> {order.user?.name || "Guest"}</p>
-      <p><b>Email:</b> {order.user?.email || "N/A"}</p>
-      <p><b>Total Amount:</b> ₹{order.totalAmount}</p>
-      <p><b>Items:</b></p>
-      <ul style={{ paddingLeft: 15 }}>
-        {order.items?.map((item) => (
-          <li key={item._id}>
-            {item.name} - {item.selectedOption} x {item.quantity} (₹{item.price})
-          </li>
-        ))}
-      </ul>
-      {order.deliveryStartDate && (
-        <>
-          <p><b>Delivery:</b> {dayjs(order.deliveryStartDate).format("DD/MM/YYYY")} - {dayjs(order.deliveryEndDate).format("DD/MM/YYYY")}</p>
-        </>
-      )}
-      <p><b>Status:</b> {order.status.toUpperCase()}</p>
-    </div>
-  );
+  /* ================= CALENDAR ================= */
+  const dateCellRender = (value) => {
+    const day = value.format("YYYY-MM-DD");
 
+    const count = orders.filter((o) =>
+      generateDeliveryDatesFromRange(o).includes(day)
+    ).length;
+
+    if (!count) return null;
+
+    return (
+      <div className="calendar-dot-wrapper">
+        <span className="calendar-dot">{count}</span>
+      </div>
+    );
+  };
+
+  const onCalendarSelect = (value) => {
+    const day = value.format("YYYY-MM-DD");
+
+    const dayOrders = orders.filter((o) =>
+      generateDeliveryDatesFromRange(o).includes(day)
+    );
+
+    setCalendarDate(value);
+    setSelectedDateOrders(dayOrders);
+    setDrawerOpen(true);
+  };
+
+  /* ================= TABLE ================= */
   const columns = [
     {
       title: "Order ID",
-      dataIndex: "_id",
-      render: (_, __, index) =>
-        `PLATTER-${String(index + 1).padStart(3, "0")}`,
+      render: (_, r) => r.orderId,
     },
     {
       title: "User",
       dataIndex: "user",
-      render: (user) => user?.name,
+      render: (u) => u?.name || "Guest",
     },
     {
-      title: "Total Amount",
+      title: "Amount",
       dataIndex: "totalAmount",
-      render: (amount) => `₹${amount}`,
+      render: (a) => `₹${a}`,
     },
     {
       title: "Status",
       dataIndex: "status",
-      render: (status) => {
-        let color = "orange";
-        if (status === "order-complete") color = "green";
-        if (status === "payment-success") color = "blue";
-        if (status === "shipped") color = "purple";
-        if (status === "delivered") color = "cyan";
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
+      render: (s) => (
+        <Tag color={s === "delivered" ? "green" : "orange"}>
+          {s.toUpperCase()}
+        </Tag>
+      ),
     },
     {
       title: "View",
-      render: (_, record) => (
+      render: (_, r) => (
         <Popover
-          content={renderOrderDetails(record)}
-          title="Order Details"
           trigger="click"
+          title="Order Details"
+          content={
+            <>
+              <p><b>User:</b> {r.user?.name}</p>
+              <p><b>Total:</b> ₹{r.totalAmount}</p>
+              <p><b>Plan:</b> {r.items[0]?.selectedOption}</p>
+            </>
+          }
         >
-          <Button type="primary" icon={<EyeOutlined />} size="small">
-            View
-          </Button>
+          <Button icon={<EyeOutlined />} size="small" />
         </Popover>
       ),
     },
@@ -216,91 +243,97 @@ const MainDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <Toaster position="top-right" />
-      <h1 className="dashboard-title">Admin Dashboard</h1>
+      <Toaster />
+      <h1>Admin Dashboard</h1>
 
-      <div style={{ marginBottom: 20 }}>
-        <RangePicker onChange={onDateChange} />
+      <RangePicker onChange={onDateChange} />
+
+      {/* STATS */}
+      <Row gutter={16} style={{ marginTop: 20 }}>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Products" value={products.length} prefix={<ShopOutlined />} />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Orders" value={filteredOrders.length} prefix={<ShoppingCartOutlined />} />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Revenue" value={totalRevenue} prefix={<DollarOutlined />} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* CALENDAR */}
+      <Row style={{ marginTop: 30 }}>
+        <Col span={24}>
+          <Card title="Delivery Schedule">
+            <Calendar dateCellRender={dateCellRender} onSelect={onCalendarSelect} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* DRAWER (FIXED) */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        width={420}
+        title={`Orders on ${calendarDate?.format("DD MMM YYYY")}`}
+      >
+       {selectedDateOrders.map((order) => (
+  <Card key={order._id} style={{ marginBottom: 12 }}>
+    <p><b>Order ID:</b> {order.orderId}</p>
+    <p><b>User:</b> {order.user?.name}</p>
+    <p><b>Status:</b> {order.status.toUpperCase()}</p>
+    <p><b>Plan:</b> {order.items[0]?.selectedOption}</p>
+
+    {/* ITEMS & INGREDIENTS */}
+    <p><b>Items:</b></p>
+    {order.items.map((item) => (
+      <div key={item._id} style={{ marginBottom: 8 }}>
+        <p>
+          <b>{item.name}</b> × {item.quantity}
+        </p>
+
+        {item.selectedIngredients?.length > 0 ? (
+          <>
+            <p style={{ marginBottom: 4 }}><b>Ingredients:</b></p>
+            <ul style={{ marginLeft: 16 }}>
+              {item.selectedIngredients.map((ing) => (
+                <li key={ing.ingredientId}>
+                  {ing.name} ({ing.quantity})
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p style={{ fontStyle: "italic", color: "#888" }}>
+            No extra ingredients
+          </p>
+        )}
       </div>
+    ))}
 
-      <Row gutter={16} className="stats-cards">
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic
-              title="Total Products"
-              value={products.length}
-              prefix={<ShopOutlined />}
-            />
-          </Card>
-        </Col>
+    {/* DELIVERY DAYS */}
+    <p><b>Delivery Days:</b></p>
+    <ul>
+      {generateDeliveryDatesFromRange(order).map((d) => (
+        <li key={d}>{dayjs(d).format("DD MMM YYYY")}</li>
+      ))}
+    </ul>
 
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic
-              title="Total Orders"
-              value={filteredOrders.length}
-              prefix={<ShoppingCartOutlined />}
-            />
-          </Card>
-        </Col>
+    <p><b>Total:</b> ₹{order.totalAmount}</p>
+  </Card>
+))}
 
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic
-              title="Total Revenue"
-              value={totalRevenue}
-              prefix={<DollarOutlined />}
-              precision={2}
-            />
-          </Card>
-        </Col>
-      </Row>
+      </Drawer>
 
-      {/* Charts */}
+      {/* TABLES */}
       <Row gutter={16} style={{ marginTop: 30 }}>
-        <Col xs={24} md={12}>
-          <Card title="Orders & Revenue Over Time" className="chart-card">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <RechartsTooltip />
-                <Line type="monotone" dataKey="orders" stroke="#8884d8" />
-                <Line type="monotone" dataKey="revenue" stroke="#82ca9d" />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-
-        <Col xs={24} md={12}>
-          <Card title="Orders by Status" className="chart-card">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label
-                >
-                  {statusData.map((_, i) => (
-                    <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Orders Tables Side by Side */}
-      <Row gutter={16} style={{ marginTop: 30 }}>
-        <Col xs={24} lg={12}>
+        <Col span={12}>
           <Card title="Recent Orders">
             <Table
               dataSource={filteredOrders.slice(0, 10)}
@@ -310,9 +343,8 @@ const MainDashboard = () => {
             />
           </Card>
         </Col>
-
-        <Col xs={24} lg={12}>
-          <Card title="Today's Orders">
+        <Col span={12}>
+          <Card title="Today's Deliveries">
             <Table
               dataSource={todayOrders}
               columns={columns}

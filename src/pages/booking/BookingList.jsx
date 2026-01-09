@@ -1,17 +1,44 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 import dayjs from "dayjs";
-import { FaCalendarAlt, FaDollarSign, FaBoxOpen, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaDollarSign,
+  FaBoxOpen,
+  FaChevronDown,
+  FaChevronUp,
+  FaListUl,
+} from "react-icons/fa";
 import "./BookingList.css";
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);
+/* ================= HELPERS ================= */
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(amount);
+
+const getPlanLabel = (option) => {
+  switch (option) {
+    case "oneTime":
+      return "One-Time Purchase";
+    case "monthly":
+      return "Monthly Subscription";
+    case "weekly3_MWF":
+      return "Weekly (Mon • Wed • Fri)";
+    case "weekly3_TTS":
+      return "Weekly (Tue • Thu • Sat)";
+    case "weekly6":
+      return "Weekly (Mon → Sat)";
+    default:
+      return option;
+  }
 };
 
 export default function BookingList() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedOrder, setExpandedOrder] = useState(null); // Track which order is expanded
+  const [expandedOrder, setExpandedOrder] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -21,14 +48,15 @@ export default function BookingList() {
         setLoading(false);
         return;
       }
+
       try {
         const res = await api.get("/orders/my-orders", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const formatted = res.data.map((order, orderIndex) => ({
+        const formatted = res.data.map((order, idx) => ({
           ...order,
-          uid: order.orderId || `booking-${order._id}-${orderIndex}`,
+          uid: order.orderId || `booking-${order._id}-${idx}`,
         }));
 
         setBookings(formatted);
@@ -59,58 +87,108 @@ export default function BookingList() {
   return (
     <div className="booking-container">
       <h1 className="booking-title">Order History</h1>
+
       <div className="booking-list">
         {bookings.map((order) => {
           const isExpanded = expandedOrder === order.orderId;
+
           return (
             <div className="booking-card" key={order.uid}>
-              {/* Header */}
-              <div className="booking-header" onClick={() => toggleExpand(order.orderId)} style={{ cursor: "pointer" }}>
+              {/* ================= HEADER ================= */}
+              <div
+                className="booking-header"
+                onClick={() => toggleExpand(order.orderId)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="order-id-info">
                   <span className="label">Order ID</span>
                   <h3 className="id-value">{order.orderId}</h3>
                 </div>
+
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <span className={`status-badge status-${order.status.toLowerCase()}`}>
+                  <span className={`status-badge status-${order.status}`}>
                     {order.status.toUpperCase()}
                   </span>
-                  {isExpanded ? <FaChevronUp style={{ marginLeft: "8px" }} /> : <FaChevronDown style={{ marginLeft: "8px" }} />}
+                  {isExpanded ? (
+                    <FaChevronUp style={{ marginLeft: 8 }} />
+                  ) : (
+                    <FaChevronDown style={{ marginLeft: 8 }} />
+                  )}
                 </div>
               </div>
 
               {isExpanded && (
                 <>
                   <hr className="divider" />
-                  {/* Summary Row */}
+
+                  {/* ================= SUMMARY ================= */}
                   <div className="booking-summary-row">
                     <div className="summary-item">
                       <FaCalendarAlt className="summary-icon" />
                       <span className="summary-label">Delivery Window</span>
                       <p className="summary-value">
-                        {dayjs(order.deliveryStartDate).format("MMM DD")} – {dayjs(order.deliveryEndDate).format("MMM DD, YYYY")}
+                        {dayjs(order.deliveryStartDate).format("MMM DD")} –{" "}
+                        {dayjs(order.deliveryEndDate).format("MMM DD, YYYY")}
                       </p>
                     </div>
+
                     <div className="summary-item">
                       <FaDollarSign className="summary-icon" />
                       <span className="summary-label">Total Paid</span>
-                      <p className="summary-value amount">{formatCurrency(order.totalAmount)}</p>
+                      <p className="summary-value amount">
+                        {formatCurrency(order.totalAmount)}
+                      </p>
                     </div>
                   </div>
 
                   <hr className="divider" />
 
-                  {/* Items Details */}
+                  {/* ================= ITEMS ================= */}
                   <div className="booking-items-expanded">
-                    <h4>Items:</h4>
+                    <h4>Items</h4>
+
                     {order.items.map((item) => (
-                      <div className="item-detail" key={item._id} style={{ display: "flex", marginBottom: "10px" }}>
-                        <img src={item.image} alt={item.name} className="item-image-thumb" style={{ width: 60, height: 60, marginRight: 12 }} />
-                        <div>
+                      <div className="item-detail" key={item._id}>
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="item-image-thumb"
+                        />
+
+                        <div className="item-info">
                           <strong>{item.name}</strong>
+
+                          {/* ✅ PLAN */}
+                          <p>
+                            <strong>Plan:</strong>{" "}
+                            {getPlanLabel(item.selectedOption)}
+                          </p>
+
                           <p>Qty: {item.quantity}</p>
-                          <p>Option: {item.selectedOption}</p>
                           <p>Price: {formatCurrency(item.price)}</p>
-                          {item.fullProduct?.desc && <p>Description: {item.fullProduct.desc}</p>}
+
+                          {/* ✅ INGREDIENTS */}
+                          {item.selectedIngredients?.length > 0 && (
+                            <div className="ingredient-section">
+                              <FaListUl className="ingredient-icon" />
+                              <span className="ingredient-title">
+                                Selected Ingredients:
+                              </span>
+                              <ul className="ingredient-list">
+                                {item.selectedIngredients.map((ing, idx) => (
+                                  <li key={idx}>
+                                    {ing.name} ({ing.quantity})
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {item.fullProduct?.desc && (
+                            <p className="item-desc">
+                              {item.fullProduct.desc}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}

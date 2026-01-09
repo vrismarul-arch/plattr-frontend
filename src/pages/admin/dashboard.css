@@ -2,7 +2,20 @@
 .dashboard-container {
   padding: 20px;
   background: #f5f5f5;
+}.calendar-dot-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
 }
+
+.calendar-dot {
+  background: #ff4d4f;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
 
 /* Title */
 .dashboard-title {

@@ -4,8 +4,13 @@ import "./OrderStatus.css";
 
 const CheckoutSuccess = () => {
   const { state } = useLocation();
+
+  // ✅ FIXED LINE
   const orderId = state?.orderId || "N/A";
   const totalAmount = state?.totalAmount || 0;
+  const deliveryStartDate = state?.deliveryStartDate;
+  const deliveryEndDate = state?.deliveryEndDate;
+  const paymentMethod = "Cash on Delivery";
 
   const [copied, setCopied] = useState(false);
 
@@ -19,40 +24,69 @@ const CheckoutSuccess = () => {
     }
   };
 
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+
   return (
     <div className="checkout-status-wrapper">
       <div className="status-card success">
         {/* Animated Success Icon */}
         <div className="status-icon-animated"></div>
 
-        <h1>Order Placed Successfully!</h1>
+        <h1>Order Confirmed 🎉</h1>
         <p className="order-summary-tagline">
-          Thank you for shopping with us! Below are your order details.
+          Thank you for your order! Your items will be delivered as per the
+          schedule below.
         </p>
 
-        {/* Order Details Card */}
+        {/* ORDER DETAILS */}
         <div className="order-details-card">
-         
+          
 
-          <hr />
+          <p className="detail-row">
+            <span className="detail-label">Payment Method:</span>
+            <span className="detail-value cod-badge">
+              {paymentMethod}
+            </span>
+          </p>
 
           <p className="detail-row total-paid">
-            <span className="detail-label">Total Paid:</span>
-            <span className="detail-value">₹{totalAmount.toFixed(2)}</span>
+            <span className="detail-label">
+              Amount to Pay on Delivery:
+            </span>
+            <span className="detail-value">
+              ₹{Number(totalAmount).toFixed(2)}
+            </span>
           </p>
         </div>
 
-        {/* Delivery Info */}
+        {/* DELIVERY INFO */}
         <div className="delivery-info">
-          <p>
-            Your estimated delivery is <strong>Friday, Nov 22nd, 2025</strong>.
-          </p>
+          {deliveryStartDate && deliveryEndDate ? (
+            <>
+              <p>
+                📦 <strong>Delivery Period:</strong>
+              </p>
+              <p>
+                {formatDate(deliveryStartDate)} →{" "}
+                {formatDate(deliveryEndDate)}
+              </p>
+            </>
+          ) : (
+            <p>📦 Your delivery schedule will be shared shortly.</p>
+          )}
+
           <p className="small-text">
-            You will receive a tracking link via email shortly.
+            Please keep the exact amount ready at the time of delivery.
           </p>
         </div>
 
-        {/* Actions */}
+        {/* ACTION BUTTONS */}
         <div className="status-actions">
           <Link to="/bookings" className="status-btn primary">
             View My Orders

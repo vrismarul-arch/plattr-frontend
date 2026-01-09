@@ -15,6 +15,7 @@
     "antd": "^5.28.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
+    "firebase": "^12.7.0",
     "jwt-decode": "^3.1.2",
     "lucide-react": "^0.553.0",
     "moment": "^2.30.1",

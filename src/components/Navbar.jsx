@@ -15,6 +15,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   ShoppingCartOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import "./Navbar.css";
 import logo from "../assets/logo.png";
@@ -38,6 +39,8 @@ const Navbar = () => {
   const handleMenuClick = ({ key }) => {
     if (key === "profile") {
       navigate("/profile");
+    } else if (key === "bookings") {
+      navigate("/bookings");
     } else if (key === "logout") {
       // Clear local storage
       localStorage.removeItem("token");
@@ -55,6 +58,11 @@ const Navbar = () => {
           key: "profile",
           label: "Profile",
           icon: <UserOutlined />,
+        },
+        {
+          key: "bookings",
+          label: "Bookings",
+          icon: <CalendarOutlined />,
         },
         {
           key: "logout",

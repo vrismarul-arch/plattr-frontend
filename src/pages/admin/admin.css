@@ -8,6 +8,19 @@
 .admin-dashboard {
   padding: 30px;
 }
+.calendar-dot-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.calendar-dot {
+  background: #ff4d4f;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
 
 .ant-table {
   overflow-x: auto;

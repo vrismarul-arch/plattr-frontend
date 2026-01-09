@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import api from "../../api/api"; // Axios instance
+import api from "../../api/api";
+import { Input } from "antd"; // ✅ antd
+import "antd/dist/reset.css";
 import "./AdminLogin.css";
 
 import illustration from "./side.png";
@@ -26,15 +28,13 @@ export default function AdminLogin() {
 
   return (
     <div className="container">
-
-      {/* Top-right logo row */}
+      {/* Logos */}
       <div className="logo-wrapper">
         <img src={logo} alt="Logo" className="logo" />
         <img src={logo2} alt="Secondary Logo" className="logo-secondary" />
       </div>
 
       <div className="form-container">
-
         <div className="form-content">
           <h1 className="title">Welcome Back</h1>
           <p className="subtitle">Please enter your admin details</p>
@@ -42,43 +42,43 @@ export default function AdminLogin() {
           {error && <p className="error">{error}</p>}
 
           <form onSubmit={handleLogin} className="form">
-            <input
+            {/* EMAIL */}
+            <Input
               type="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="input"
+              size="large"
+              required
             />
 
-            <input
-              type="password"
+            {/* PASSWORD — antd with visibility toggle */}
+            <Input.Password
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input"
+              size="large"
+              visibilityToggle // 👁️ built-in
+              required
             />
 
             <div className="options">
               <label>
                 <input type="checkbox" /> Remember for 30 days
               </label>
-
               <a href="#" className="forgot">Forgot password?</a>
             </div>
 
-            <button type="submit" className="btn">Sign In</button>
+            <button type="submit" className="btn">
+              Sign In
+            </button>
           </form>
-
-          {/* <p className="signup">
-            Don't have an account? <a href="#">Sign up</a>
-          </p> */}
         </div>
       </div>
 
       <div className="image-container">
         <img src={illustration} alt="Admin Illustration" className="image" />
       </div>
-
     </div>
   );
 }

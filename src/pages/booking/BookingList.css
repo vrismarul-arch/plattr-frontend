@@ -1,169 +1,243 @@
+/* ================= ROOT ================= */
 .booking-container {
   margin: auto;
-  font-family: 'Poppins', sans-serif;
   padding: 20px;
+  background: #f6f8fc;
 }
 
 .booking-title {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #333;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: #111827;
 }
 
+/* ================= LIST ================= */
 .booking-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-}
-
-.booking-card {
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-  padding: 20px;
-  text-decoration: none;
-  color: inherit;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  gap: 14px;
+}
+
+/* ================= CARD ================= */
+.booking-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.25s ease;
 }
 
 .booking-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 25px 40px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
-/* Header & Status */
+/* ================= HEADER ================= */
 .booking-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 18px;
 }
 
 .order-id-info .label {
-  font-size: 0.75rem;
-  color: #777;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .id-value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
 }
 
+/* ================= STATUS ================= */
 .status-badge {
   padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  color: white;
-  text-transform: uppercase;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 6px;
 }
 
-.status-pending { background: #ff9800; }
-.status-completed { background: #4caf50; }
-.status-cancelled { background: #f44336; }
-.status-processing { background: #2196f3; }
+.status-pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
 
-/* Divider */
+.status-payment-success,
+.status-order-complete {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.status-shipped {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status-delivered {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+/* ================= DIVIDER ================= */
 .divider {
-  margin: 10px 0;
   border: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e5e7eb;
+  margin: 0;
 }
 
-/* Summary Row */
+/* ================= SUMMARY ================= */
 .booking-summary-row {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 16px 18px;
 }
 
 .summary-item {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  flex-direction: column;
 }
 
-.summary-icon { color: #2196f3; }
-.summary-label { font-size: 0.75rem; color: #777; }
-.summary-value { font-weight: 500; font-size: 0.9rem; }
+.summary-icon {
+  color: #16a34a;
+  margin-bottom: 4px;
+}
 
-/* Items Preview */
-.booking-items-preview {
+.summary-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.summary-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.summary-value.amount {
+  color: #16a34a;
+}
+
+/* ================= ITEMS ================= */
+.booking-items-expanded {
+  padding: 16px 18px;
+}
+
+.booking-items-expanded h4 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ================= ITEM ROW ================= */
+.item-detail {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #e5e7eb;
 }
 
-.item-preview-thumbnail {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  position: relative;
+.item-detail:last-child {
+  border-bottom: none;
 }
 
-.item-preview-thumbnail img {
-  width: 100%;
-  height: 100%;
+.item-image-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
-.item-count-overlay {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ================= ITEM INFO ================= */
+.item-info {
+  flex: 1;
 }
 
-/* View Details CTA */
-.view-details-action {
-  margin-top: 15px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  color: #2196f3;
+.item-info strong {
+  font-size: 15px;
+  color: #111827;
 }
 
-.view-details-action .chevron {
-  margin-left: 5px;
+.item-info p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #374151;
 }
 
-/* Empty state */
+/* ================= PLAN ================= */
+.item-info p strong {
+  color: #16a34a;
+}
+
+/* ================= INGREDIENTS ================= */
+.ingredient-section {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f0fdf4;
+  border-radius: 10px;
+}
+
+.ingredient-icon {
+  color: #16a34a;
+  margin-right: 6px;
+}
+
+.ingredient-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #14532d;
+}
+
+.ingredient-list {
+  margin-top: 6px;
+  padding-left: 18px;
+}
+
+.ingredient-list li {
+  font-size: 12px;
+  color: #166534;
+  margin-bottom: 2px;
+}
+
+/* ================= EMPTY ================= */
 .empty-state {
   text-align: center;
-  margin-top: 50px;
+  padding: 60px 20px;
 }
 
-.empty-icon { color: #ccc; margin-bottom: 10px; }
-.shop-now-btn {
-  margin-top: 10px;
-  padding: 10px 20px;
-  background: #4caf50;
-  color: white;
-  border-radius: 50px;
-  text-decoration: none;
-  display: inline-block;
+.empty-icon {
+  color: #9ca3af;
 }
 
-.shop-now-btn:hover { background: #45a049; }
+.empty-booking {
+  font-size: 16px;
+  color: #6b7280;
+  margin-top: 12px;
+}
 
-/* Loading */
-.loading { text-align: center; font-size: 1.2rem; color: #777; margin-top: 50px; }
+/* ================= LOADING ================= */
+.loading {
+  text-align: center;
+  font-size: 16px;
+  color: #6b7280;
+  padding: 40px;
+}
 
-/* Responsive */
-@media (max-width: 480px) {
-  .booking-card { padding: 15px; }
-  .item-preview-thumbnail { width: 40px; height: 40px; }
-  .view-details-action { font-size: 0.85rem; }
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .booking-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .item-detail {
+    flex-direction: column;
+  }
+
+  .item-image-thumb {
+    width: 100%;
+    height: 160px;
+  }
 }

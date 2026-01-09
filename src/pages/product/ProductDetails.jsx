@@ -5,264 +5,315 @@ import { useCart } from "../../context/CartContext";
 import "./ProductDetails.css";
 
 const ProductDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { addToCart } = useCart();
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { addToCart } = useCart();
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadProduct = async () => {
-      try {
-        const res = await api.get(`/products/${id}`);
-        setProduct(res.data);
-      } catch (err) {
-        console.error("Failed to load product", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProduct();
-  }, [id]);
+    // ================= SELECTION STATES =================
+    const [selectedOption, setSelectedOption] = useState("oneTime");
+    const [selectedIngredients, setSelectedIngredients] = useState([]);
 
-  if (loading) return <div className="loader">Loading...</div>;
-  if (!product) return <p className="not-found">Product not found</p>;
+    // ================= LOAD PRODUCT =================
+    useEffect(() => {
+        const loadProduct = async () => {
+            try {
+                const res = await api.get(`/products/${id}`);
+                setProduct(res.data);
+            } catch (err) {
+                console.error("Failed to load product", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadProduct();
+    }, [id]);
 
-  const handleAddToCart = () => {
-    const user = localStorage.getItem("user");
-    if (!user) return navigate("/login");
-    addToCart(product);
-    navigate("/cart");
-  };
+    if (loading) return <div className="loader">Loading...</div>;
+    if (!product) return <p className="not-found">Product not found</p>;
 
-  const displayPrice = product.prices?.oneTime || 50;
+    // ================= INGREDIENT TOGGLE =================
+    const toggleIngredient = (ing) => {
+        setSelectedIngredients((prev) =>
+            prev.some((i) => i._id === ing._id)
+                ? prev.filter((i) => i._id !== ing._id)
+                : [...prev, ing]
+        );
+    };
 
-  return (
-    <>
-      {/* ================= DESKTOP VERSION ================= */}
-      <div className="pd-desktop-grid">
-        <div className="pd-image-container">
-          <img src={product.img} alt={product.name} className="pd-main-img" />
-          <button className="pd-back-desktop" onClick={() => navigate(-1)}>
-            ← Back
-          </button>
-        </div>
+    // ================= DISPLAY PRICE =================
+    const displayPrice =
+        selectedOption === "monthly"
+            ? product.prices?.monthly
+            : selectedOption === "weekly3_MWF"
+                ? product.prices?.weekly3?.monWedFri
+                : selectedOption === "weekly3_TTS"
+                    ? product.prices?.weekly3?.tueThuSat
+                    : selectedOption === "weekly6"
+                        ? product.prices?.weekly6?.monToSat
+                        : product.prices?.oneTime;
 
-        <div className="pd-content-pro">
-          <div className="pd-header-pro">
-            <h1 className="pd-title">{product.name}</h1>
-            {product.totalQuantity ? (
-              <span className="pd-stock-badge">
-                {product.totalQuantity}
-              </span>
-            ) : (
-              <span className="pd-out-badge">Out of Stock</span>
-            )}
-          </div>
+    // ================= ADD TO CART =================
+    const handleAddToCart = () => {
+        const user = localStorage.getItem("user");
+        if (!user) return navigate("/login");
 
-          <p className="pd-desc">{product.desc}</p>
+        addToCart(
+            product,
+            selectedOption,
+            selectedIngredients // 🔥 MUST PASS THIS
+        );
 
-          {/* Pricing Cards */}
-          <div className="pricing-grid-pro">
-            <div className="price-box one-time">
-              <span className="label">One Time Purchase</span><br />
-              <span className="price">₹{product.prices?.oneTime}</span>
-            </div>
+        navigate("/cart");
+    };
 
-            <div className="price-box monthly">
-              <span className="label">Monthly Subscription</span><br />
-              <span className="price">
-                ₹{product.prices?.monthly}
-                <small>/month</small>
-              </span>
-            </div>
-          </div>
 
-          {/* Weekly Plans */}
-          <div className="weekly-plans">
-            <h3>Choose Your Weekly Plan</h3>
+    return (
+        <>
+            {/* ================= DESKTOP ================= */}
+            <div className="pd-desktop-grid">
+                <div className="pd-image-container">
+                    <img src={product.img} alt={product.name} className="pd-main-img" />
+                    <button className="pd-back-desktop" onClick={() => navigate(-1)}>
+                        ← Back
+                    </button>
+                </div>
 
-            <div className="weekly-cards">
+                <div className="pd-content-pro">
+                    <div className="pd-header-pro">
+                        <h1 className="pd-title">{product.name}</h1>
+                    </div>
 
-              {/* Mon–Wed–Fri */}
-              <div className="weekly-card">
-                <div>
-                  <div className="days">Mon • Wed • Fri</div>
-                  <div className="plan">3 Days / Week</div>
-                  <div className="wprice">
-                    ₹{product.prices?.weekly3?.monWedFri}
-                  </div>
-                </div>
-              </div>
+                    <p className="pd-desc">{product.desc}</p>
 
-              {/* Tue–Thu–Sat */}
-              <div className="weekly-card">
-                <div>
-                  <div className="days">Tue • Thu • Sat</div>
-                  <div className="plan">3 Days / Week</div>
-                  <div className="wprice">
-                    ₹{product.prices?.weekly3?.tueThuSat}
-                  </div>
-                </div>
-              </div>
+                    {/* ================= ONE TIME / MONTHLY ================= */}                        
+<h3 className="pd-subtitle">One Time Weekly Plan</h3>
+                    <div className="pricing-grid-pro">                         
+                        <div
+                            className={`price-box one-time ${selectedOption === "oneTime" ? "selected" : ""
+                                }`}
+                            onClick={() => setSelectedOption("oneTime")}
+                        >
+                            <span className="label">One Time Purchase</span>
+                            <br />
+                            <span className="price">₹{product.prices?.oneTime}</span>
+                        </div>
 
-              {/* 6 Days Plan */}
-              <div className="weekly-card best-value">
-                <div className="best-badge">BEST VALUE</div>
-                <div>
-                  <div className="days">Mon → Sat</div>
-                  <div className="plan">6 Days / Week</div>
-                  <div className="wprice highlight">
-                    ₹{product.prices?.weekly6?.monToSat}
-                  </div>
-                </div>
-              </div>
+                        <div
+                            className={`price-box monthly ${selectedOption === "monthly" ? "selected" : ""
+                                }`}
+                            onClick={() => setSelectedOption("monthly")}
+                        >
+                            <span className="label">Monthly Subscription</span>
+                            <br />
+                            <span className="price">
+                                ₹{product.prices?.monthly}
+                                <small>/month</small>
+                            </span>
+                        </div>
+                    </div>
 
-            </div>
-          </div>
+                    {/* ================= WEEKLY ================= */}
+                    <div className="weekly-plans">
+                        <h3>Choose Your Weekly Plan</h3>
 
-          {/* Ingredients */}
-          {product.ingredients?.length > 0 && (
-            <div className="ingredients-section">
-              <h3>Fresh Ingredients Included</h3>
-              <div className="ing-grid">
-                {product.ingredients.map((ing) => (
-                  <div key={ing._id} className="ing-item-pro">
-                    <span className="ing-name">{ing.name}</span>
-                    <span className="ing-amt">{ing.quantity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                        <div className="weekly-cards">
+                            <div
+                                className={`weekly-card ${selectedOption === "weekly3_MWF" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly3_MWF")}
+                            >
+                                <div className="days">Mon • Wed • Fri</div>
+                                <div className="plan">3 Days / Week</div>
+                                <div className="wprice">
+                                    ₹{product.prices?.weekly3?.monWedFri}
+                                </div>
+                            </div>
 
-          {/* Desktop CTA */}
-          <button className="desktop-cta" onClick={handleAddToCart}>
-            <span>Add to Cart • ₹{product.prices?.oneTime}</span> →
-          </button>
-        </div>
-      </div>
+                            <div
+                                className={`weekly-card ${selectedOption === "weekly3_TTS" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly3_TTS")}
+                            >
+                                <div className="days">Tue • Thu • Sat</div>
+                                <div className="plan">3 Days / Week</div>
+                                <div className="wprice">
+                                    ₹{product.prices?.weekly3?.tueThuSat}
+                                </div>
+                            </div>
 
-      {/* ================= MOBILE VERSION ================= */}
-      <div className="plattr-mobile">
+                            <div
+                                className={`weekly-card best-value ${selectedOption === "weekly6" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly6")}
+                            >
+                                <div className="best-badge">BEST VALUE</div>
+                                <div className="days">Mon → Sat</div>
+                                <div className="plan">6 Days / Week</div>
+                                <div className="wprice highlight">
+                                    ₹{product.prices?.weekly6?.monToSat}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        {/* Top Bar */}
-        <div className="top-bar">
-          <div className="back-arrow" onClick={() => navigate(-1)}>
-            ←
-          </div>
-          <img src="/logo.png" alt="" className="logo" />
-          <div className="right-icons">
-            <div className="cart-icon">
-              🛒 <span className="cart-count">0</span>
-            </div>
-            <div className="profile-icon">👤</div>
-            <div className="profile-icon">👤</div>
-          </div>
-        </div>
+                    {/* ================= INGREDIENTS ================= */}
+                    {product.ingredients?.length > 0 && (
+                        <div className="ingredients-section">
+                            <h3>Ingredients</h3>
+                            <div className="ing-grid">
+                                {product.ingredients.map((ing) => (
+                                    <div
+                                        key={ing._id}
+                                        className={`ing-item-pro ${selectedIngredients.some(
+                                            (i) => i._id === ing._id
+                                        )
+                                            ? "selected"
+                                            : ""
+                                            }`}
+                                        onClick={() => toggleIngredient(ing)}
+                                    >
+                                        <span className="ing-name">{ing.name}</span>
+                                        <span className="ing-amt">{ing.quantity}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
-        {/* Product Image */}
-        <div className="product-image-container">
-          <img src={product.img} alt={product.name} className="product-img" />
-        </div>
+                    {/* ================= CTA ================= */}
+                    <button className="desktop-cta" onClick={handleAddToCart}>
+                        <span>Add to Cart • ₹{displayPrice}</span> →
+                    </button>
+                </div>
+            </div>
 
-        {/* Add to Cart */}
-        <div className="add-to-cart-bar" onClick={handleAddToCart}>
-          <div className="atc-text">
-            Add to Cart <span className="price">₹{displayPrice}</span>
-          </div>
-          <div className="atc-arrow">→</div>
-        </div>
+            {/* ================= MOBILE ================= */}
+            <div className="plattr-mobile">
+                <div className="top-bar">
+                    <button className="pd-back-desktop" onClick={() => navigate(-1)}>
+                        ← Back
+                    </button>
+                </div>
 
-        {/* Product Info */}
-        <div className="product-info">
-          <h1 className="product-title">{product.name}</h1>
-          <p className="product-desc">{product.desc}</p>
-        </div>
+                <div className="product-image-container">
+                    <img src={product.img} alt={product.name} className="product-img" />
+                </div>
+                <div className="pd-content-pro">
+                    <div className="pd-header-pro">
+                        <h1 className="pd-title">{product.name}</h1>
+                    </div>
 
-        {/* Full Content */}
-        <div className="full-content">
+                    <p className="pd-desc">{product.desc}</p>
 
-          {/* Pricing */}
-          <div className="pd-pricing-grid">
-            <div className="price-card">
-              <div className="price-label">One Time</div>
-              <div className="price-value">₹{product.prices?.oneTime}</div>
-            </div>
+                    {/* ================= ONE TIME / MONTHLY ================= */}  <h3 className="pd-subtitle">One Time Weekly Plan</h3>
 
-            <div className="price-card">
-              <div className="price-label">Monthly Plan</div>
-              <div className="price-value">
-                ₹{product.prices?.monthly}
-                <small>/month</small>
-              </div>
-            </div>
-          </div>
+                    <div className="pricing-grid-pro">                       
 
-          {/* Weekly Plans */}
-          <div className="pd-weekly-section">
-            <h3>Weekly Plans</h3>
-            <div className="weekly-options">
+                        <div
+                            className={`price-box one-time ${selectedOption === "oneTime" ? "selected" : ""
+                                }`}
+                            onClick={() => setSelectedOption("oneTime")}
+                        >
+                            <span className="label">One Time Purchase</span>
+                            <br />
+                            <span className="price">₹{product.prices?.oneTime}</span>
+                        </div>
 
-              {/* Mon–Wed–Fri */}
-              <div className="weekly-card">
-                <div>
-                  <div className="days">Mon • Wed • Fri</div>
-                  <div className="plan-name">3 Days/Week</div>
-                </div>
-                <div className="price">
-                  ₹{product.prices?.weekly3?.monWedFri}
-                </div>
-              </div>
+                        <div
+                            className={`price-box monthly ${selectedOption === "monthly" ? "selected" : ""
+                                }`}
+                            onClick={() => setSelectedOption("monthly")}
+                        >
+                            <span className="label">Monthly Subscription</span>
+                            <br />
+                            <span className="price">
+                                ₹{product.prices?.monthly}
+                                <small>/month</small>
+                            </span>
+                        </div>
+                    </div>
 
-              {/* Tue–Thu–Sat */}
-              <div className="weekly-card">
-                <div>
-                  <div className="days">Tue • Thu • Sat</div>
-                  <div className="plan-name">3 Days/Week</div>
-                </div>
-                <div className="price">
-                  ₹{product.prices?.weekly3?.tueThuSat}
-                </div>
-              </div>
+                    {/* ================= WEEKLY ================= */}
+                    <div className="weekly-plans">
+                        <h3>Choose Your Weekly Plan</h3>
 
-              {/* 6 Days Plan (CORRECTED LINE BELOW) */}
-              <div className="weekly-card highlight">
-                <div>
-                  <div className="days">Mon → Sat</div>
-                  <div className="plan-name">
-                    6 Days/Week <span className="best-tag">BEST VALUE</span>
-                  </div>
-                </div>
-                <div className="price">
-                  {/* Accessing monToSat property to display the price */}
-                  ₹{product.prices?.weekly6?.monToSat} 
-                </div>
-              </div>
+                        <div className="weekly-cards">
+                            <div
+                                className={`weekly-card ${selectedOption === "weekly3_MWF" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly3_MWF")}
+                            >
+                                <div className="days">Mon • Wed • Fri</div>
+                                <div className="plan">3 Days / Week</div>
+                                <div className="wprice">
+                                    ₹{product.prices?.weekly3?.monWedFri}
+                                </div>
+                            </div>
 
-            </div>
-          </div>
+                            <div
+                                className={`weekly-card ${selectedOption === "weekly3_TTS" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly3_TTS")}
+                            >
+                                <div className="days">Tue • Thu • Sat</div>
+                                <div className="plan">3 Days / Week</div>
+                                <div className="wprice">
+                                    ₹{product.prices?.weekly3?.tueThuSat}
+                                </div>
+                            </div>
 
-          {/* Ingredients */}
-          {product.ingredients?.length > 0 && (
-            <div className="pd-ingredients-new">
-              <h3>What's Inside</h3>
-              <div className="ingredients-list">
-                {product.ingredients.map((ing) => (
-                  <div key={ing._id} className="ing-item">
-                    <span>{ing.name}</span>
-                    <span className="ing-qty">{ing.quantity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                            <div
+                                className={`weekly-card best-value ${selectedOption === "weekly6" ? "selected" : ""
+                                    }`}
+                                onClick={() => setSelectedOption("weekly6")}
+                            >
+                                <div className="best-badge">BEST VALUE</div>
+                                <div className="days">Mon → Sat</div>
+                                <div className="plan">6 Days / Week</div>
+                                <div className="wprice highlight">
+                                    ₹{product.prices?.weekly6?.monToSat}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        </div>
-      </div>
-    </>
-  );
+                    {/* ================= INGREDIENTS ================= */}
+                    {product.ingredients?.length > 0 && (
+                        <div className="ingredients-section">
+                            <h3>Ingredients</h3>
+                            <div className="ing-grid">
+                                {product.ingredients.map((ing) => (
+                                    <div
+                                        key={ing._id}
+                                        className={`ing-item-pro ${selectedIngredients.some(
+                                            (i) => i._id === ing._id
+                                        )
+                                            ? "selected"
+                                            : ""
+                                            }`}
+                                        onClick={() => toggleIngredient(ing)}
+                                    >
+                                        <span className="ing-name">{ing.name}</span>
+                                        <span className="ing-amt">{ing.quantity}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+
+                </div>
+                <div className="add-to-cart-bar" onClick={handleAddToCart}>
+                    <button className="desktop-cta" onClick={handleAddToCart}>
+                        <span>Add to Cart • ₹{displayPrice}</span> →
+                    </button>
+                </div>
+            </div>
+        </>
+    );
 };
 
 export default ProductDetails;

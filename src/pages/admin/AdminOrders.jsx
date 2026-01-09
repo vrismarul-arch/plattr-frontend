@@ -6,7 +6,7 @@ import {
   Select,
   Tabs,
   Button,
-  Modal,
+  Drawer,
   Divider,
   Tag,
 } from "antd";
@@ -29,7 +29,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [detailModal, setDetailModal] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   // 🔵 FETCH ORDERS
@@ -52,15 +52,13 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
-  // 🔵 UPDATE STATUS WITH FULL-PAGE REFRESH
+  // 🔵 UPDATE ORDER STATUS
   const updateStatus = async (id, value) => {
     const updateToast = toast.loading("Updating status...");
     try {
       await api.put(`/orders/${id}/status`, { status: value });
       toast.success("Status updated!", { id: updateToast });
-
-      // 🔥 Refresh whole page
-      window.location.reload();
+      fetchOrders(); // refresh data only
     } catch (err) {
       toast.error("Failed to update status", { id: updateToast });
     }
@@ -68,8 +66,17 @@ const AdminOrders = () => {
 
   // 🔵 FILTER ORDERS
   const filterStatus = (key) => {
-    if (key === "all") return setFiltered(orders);
-    setFiltered(orders.filter((o) => o.status === key));
+    if (key === "all") {
+      setFiltered(orders);
+    } else {
+      setFiltered(orders.filter((o) => o.status === key));
+    }
+  };
+
+  // 🔵 OPEN DRAWER
+  const openDetail = (order) => {
+    setSelectedOrder(order);
+    setDrawerOpen(true);
   };
 
   // 🔵 TABLE COLUMNS
@@ -95,7 +102,7 @@ const AdminOrders = () => {
       render: (status, record) => (
         <Select
           value={status}
-          style={{ width: 160 }}
+          style={{ width: 170 }}
           onChange={(value) => updateStatus(record._id, value)}
         >
           <Option value="pending">Pending</Option>
@@ -109,21 +116,12 @@ const AdminOrders = () => {
     {
       title: "View",
       render: (_, record) => (
-        <Button
-          type="primary"
-          size="small"
-          onClick={() => openDetail(record)}
-        >
+        <Button type="primary" size="small" onClick={() => openDetail(record)}>
           View Details
         </Button>
       ),
     },
   ];
-
-  const openDetail = (order) => {
-    setSelectedOrder(order);
-    setDetailModal(true);
-  };
 
   return (
     <>
@@ -143,77 +141,102 @@ const AdminOrders = () => {
         />
       </Card>
 
-      {/* ORDER DETAILS */}
-      <Modal
-        open={detailModal}
-        onCancel={() => {
-          setDetailModal(false);
+      {/* 🔵 ORDER DETAILS DRAWER */}
+      {/* 🔵 ORDER DETAILS DRAWER */}
+<Drawer
+  title="Order Details"
+  placement="right"
+  width={480}
+  open={drawerOpen}
+  onClose={() => setDrawerOpen(false)}
+>
+  {selectedOrder && (
+    <>
+      {/* ORDER HEADER */}
+      <h3>Order #{selectedOrder.orderId}</h3>
+      <p>
+        <b>Placed On:</b>{" "}
+        {new Date(selectedOrder.createdAt).toLocaleString()}
+      </p>
+      <p>
+        <b>Payment Method:</b> {selectedOrder.paymentMethod.toUpperCase()}
+      </p>
 
-          // 🔥 Refresh entire page when closing modal
-          window.location.reload();
-        }}
-        footer={null}
-        title="Order Details"
-      >
-        {selectedOrder && (
-          <>
-            <h3>Order #{selectedOrder.orderId}</h3>
-            <Divider />
+      <Divider />
 
-            <h4>Customer Info</h4>
-            <p><b>Name:</b> {selectedOrder.user?.name}</p>
-            <p><b>Email:</b> {selectedOrder.user?.email}</p>
-            <Divider />
+      {/* CUSTOMER INFO */}
+      <h4>Customer Info</h4>
+      <p><b>Name:</b> {selectedOrder.user?.name}</p>
+      <p><b>Email:</b> {selectedOrder.user?.email}</p>
 
-            <h4>Items</h4>
-            {selectedOrder.items.map((item) => (
-              <Card key={item._id} style={{ marginBottom: 12 }}>
-                <b>{item.name}</b>
-                <p>Option: {item.selectedOption}</p>
-                <p>Qty: {item.quantity}</p>
-                <p>Price: ₹{item.price}</p>
-              </Card>
-            ))}
+      <Divider />
 
-            <Divider />
+      {/* DELIVERY INFO */}
+      <h4>Delivery Schedule</h4>
+      <p>
+        <b>Start Date:</b>{" "}
+        {new Date(selectedOrder.deliveryStartDate).toLocaleDateString()}
+      </p>
+      <p>
+        <b>End Date:</b>{" "}
+        {new Date(selectedOrder.deliveryEndDate).toLocaleDateString()}
+      </p>
 
-            <h4>Order Summary</h4>
-            <p><b>Total Amount:</b> ₹{selectedOrder.totalAmount}</p>
+      <Divider />
 
-            {selectedOrder.deliveryStartDate && (
-              <>
-                <p>
-                  <b>Delivery Start:</b>{" "}
-                  {new Date(selectedOrder.deliveryStartDate).toLocaleDateString()}
-                </p>
-                <p>
-                  <b>Delivery End:</b>{" "}
-                  {new Date(selectedOrder.deliveryEndDate).toLocaleDateString()}
-                </p>
-              </>
-            )}
+      {/* ITEMS */}
+      <h4>Ordered Items</h4>
 
-            <p>
-              <b>Status:</b>
-              <Tag color="blue">{selectedOrder.status.toUpperCase()}</Tag>
-            </p>
+      {selectedOrder.items.map((item) => (
+        <Card
+          key={item._id}
+          size="small"
+          style={{ marginBottom: 14 }}
+        >
+          <p><b>Product:</b> {item.name}</p>
+          <p><b>Option:</b> {item.selectedOption}</p>
+          <p><b>Quantity:</b> {item.quantity}</p>
+          <p><b>Price:</b> ₹{item.price}</p>
 
-            <Divider />
+          {/* INGREDIENTS */}
+          {item.selectedIngredients?.length > 0 && (
+            <>
+              <Divider style={{ margin: "8px 0" }} />
+              <b>Selected Ingredients:</b>
+              <ul style={{ paddingLeft: 18, marginTop: 6 }}>
+                {item.selectedIngredients.map((ing) => (
+                  <li key={ing._id}>
+                    {ing.name} — <i>{ing.quantity}</i>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </Card>
+      ))}
 
-            <Button
-              block
-              onClick={() => {
-                setDetailModal(false);
+      <Divider />
 
-                // 🔥 Refresh full page on modal close
-                window.location.reload();
-              }}
-            >
-              Close
-            </Button>
-          </>
-        )}
-      </Modal>
+      {/* ORDER SUMMARY */}
+      <h4>Order Summary</h4>
+      <p><b>Total Amount:</b> ₹{selectedOrder.totalAmount}</p>
+
+      <p>
+        <b>Status:</b>{" "}
+        <Tag color="orange">
+          {selectedOrder.status.toUpperCase()}
+        </Tag>
+      </p>
+
+      <Divider />
+
+      <Button block type="primary" onClick={() => setDrawerOpen(false)}>
+        Close
+      </Button>
+    </>
+  )}
+</Drawer>
+
     </>
   );
 };

@@ -1,146 +1,123 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/api.jsx";
 import toast from "react-hot-toast";
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
-// Helper for safe price retrieval
-const getPriceSafely = (prices, optionKey, defaultKey = "oneTime") => {
-  if (prices && prices[optionKey] !== undefined) return prices[optionKey];
-  if (prices && prices[defaultKey] !== undefined) return prices[defaultKey];
-  return 0;
-};
-
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Check if user is logged in
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const userId = user?._id || null; // null if not logged in
 
-  // Fetch cart
+  /* ================= LOAD CART ================= */
   useEffect(() => {
-    const fetchCart = async () => {
-      if (!userId) {
-        setCartItems([]); // guest: empty cart
-        setLoading(false);
-        return;
-      }
+    if (!user) {
+      setCartItems([]);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        const res = await api.get(`/cart?userId=${userId}`);
+    api
+      .get("/cart") // ✅ token-based, no userId
+      .then((res) => {
         setCartItems(res.data.items || []);
-      } catch (err) {
-        console.error(err);
+      })
+      .catch(() => {
         toast.error("Failed to load cart");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCart();
-  }, [userId]);
+      })
+      .finally(() => setLoading(false));
+  }, [user]);
 
-  const performUpdate = async (optimisticUpdate, apiCall) => {
-    setIsUpdating(true);
-    const previousState = cartItems;
-    optimisticUpdate();
+  /* ================= ADD TO CART ================= */
+  const addToCart = async (
+    product,
+    selectedOption = "oneTime",
+    selectedIngredients = []
+  ) => {
     try {
-      if (userId) await apiCall(); // only call API if logged in
+      const payloadIngredients = (Array.isArray(selectedIngredients)
+        ? selectedIngredients
+        : []
+      ).map((ing) => ({
+        ingredientId: ing._id,
+        name: ing.name,
+        quantity: ing.quantity,
+      }));
+
+      const res = await api.post("/cart/add", {
+        productId: product._id,        // ✅ send ID only
+        selectedOption,                // ✅ correct key
+        selectedIngredients: payloadIngredients,
+        quantity: 1,
+      });
+
+      setCartItems(res.data.items);
+   
     } catch (err) {
-      console.error(err);
-      toast.error("Update failed");
-      setCartItems(previousState);
+      if (err.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      } else {
+        toast.error("Failed to add to cart");
+      }
+    }
+  };
+
+  /* ================= REMOVE ITEM ================= */
+  const removeFromCart = async (_id) => {
+    setIsUpdating(true);
+    try {
+      const res = await api.post("/cart/remove", { _id });
+      setCartItems(res.data.items);
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const addToCart = async (product, optionKey = "oneTime") => {
-    const price = getPriceSafely(product.prices, optionKey);
-
-    performUpdate(
-      () => {
-        setCartItems((prev) => {
-          const exists = prev.find(
-            (i) => i.productId === product._id && i.selectedOption === optionKey
-          );
-          if (exists) {
-            return prev.map((i) =>
-              i.productId === product._id && i.selectedOption === optionKey
-                ? { ...i, quantity: i.quantity + 1 }
-                : i
-            );
-          }
-          return [
-            ...prev,
-            {
-              ...product,
-              productId: product._id,
-              selectedOption: optionKey,
-              selectedOptionPrice: price,
-              quantity: 1,
-            },
-          ];
-        });
-        toast.success("Added to cart");
-      },
-      () =>
-        api.post("/cart/add", {
-          userId,
-          product,
-          optionKey,
-        })
-    );
-  };
-
-  const removeFromCart = async (_id) => {
-    performUpdate(
-      () => setCartItems((prev) => prev.filter((i) => i._id !== _id)),
-      () => api.post("/cart/remove", { userId, _id })
-    );
-  };
-
+  /* ================= CLEAR CART ================= */
   const clearCart = async () => {
-    performUpdate(
-      () => setCartItems([]),
-      () => api.post("/cart/clear", { userId })
-    );
+    setIsUpdating(true);
+    try {
+      const res = await api.post("/cart/clear");
+      setCartItems(res.data.items);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
+  /* ================= UPDATE QTY ================= */
   const updateCartItemQuantity = async (_id, quantity) => {
-    if (quantity < 1) return removeFromCart(_id);
+    if (quantity < 1) return;
 
-    performUpdate(
-      () =>
-        setCartItems((prev) =>
-          prev.map((i) => (i._id === _id ? { ...i, quantity } : i))
-        ),
-      () => api.post("/cart/update", { userId, _id, quantity })
-    );
+    setIsUpdating(true);
+    try {
+      const res = await api.post("/cart/update", {
+        _id,
+        quantity,
+      });
+      setCartItems(res.data.items);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const updateCartItemPriceOption = async (_id, optionKey) => {
-    const item = cartItems.find((i) => i._id === _id);
-    const newPrice = getPriceSafely(item?.prices, optionKey);
-
-    if (!item || newPrice === undefined) return;
-
-    performUpdate(
-      () =>
-        setCartItems((prev) =>
-          prev.map((i) =>
-            i._id === _id
-              ? { ...i, selectedOption: optionKey, selectedOptionPrice: newPrice }
-              : i
-          )
-        ),
-      () => api.post("/cart/update", { userId, _id, selectedOption: optionKey })
-    );
+  /* ================= UPDATE PLAN ================= */
+  const updateCartItemPriceOption = async (_id, selectedOption) => {
+    setIsUpdating(true);
+    try {
+      const res = await api.post("/cart/update", {
+        _id,
+        selectedOption,
+      });
+      setCartItems(res.data.items);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -154,7 +131,6 @@ export const CartProvider = ({ children }) => {
         clearCart,
         updateCartItemQuantity,
         updateCartItemPriceOption,
-        userLoggedIn: !!userId, // new flag for UI logic
       }}
     >
       {children}

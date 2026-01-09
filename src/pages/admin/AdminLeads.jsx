@@ -5,26 +5,27 @@ import {
   Button,
   Input,
   Space,
-  Modal,
+  Drawer,
   Popconfirm,
   message,
   Tooltip,
   Row,
   Col,
   Tag,
+  Avatar,
+  Descriptions,
+  Divider,
+  Typography,
 } from "antd";
 import {
-  SearchOutlined,
   EyeOutlined,
   DeleteOutlined,
-  CopyOutlined,
   DownloadOutlined,
-  QuestionCircleOutlined,
-  UndoOutlined,
 } from "@ant-design/icons";
 import api from "../../api/api.jsx";
 
 const { Search } = Input;
+const { Text, Paragraph } = Typography;
 
 const AdminLeads = () => {
   const [leads, setLeads] = useState([]);
@@ -32,190 +33,127 @@ const AdminLeads = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLead, setSelectedLead] = useState(null);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
 
-  const [decodeModalOpen, setDecodeModalOpen] = useState(false);
+  const [decodeDrawerOpen, setDecodeDrawerOpen] = useState(false);
   const [decodeInput, setDecodeInput] = useState("");
   const [decodeResult, setDecodeResult] = useState(null);
 
-  // fetch leads
+  // 🔵 FETCH LEADS
   const fetchLeads = async () => {
     setLoading(true);
     try {
       const { data } = await api.get("/leads");
       setLeads(data || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("Failed to fetch leads");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔄 Auto-refresh every 5 seconds
   useEffect(() => {
-    fetchLeads(); // initial load
-
-    const interval = setInterval(() => {
-      fetchLeads();
-    }, 5000); // refresh every 5 seconds
-
+    fetchLeads();
+    const interval = setInterval(fetchLeads, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // delete lead
+  // 🔴 DELETE LEAD
   const deleteLead = async (id) => {
     try {
       await api.delete(`/leads/${id}`);
       message.success("Lead deleted");
       setLeads((prev) => prev.filter((l) => l._id !== id));
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("Failed to delete lead");
     }
   };
 
-  // helpers: copy text to clipboard
-  const copyToClipboard = async (text, label = "Copied") => {
-    try {
-      await navigator.clipboard.writeText(text);
-      message.success(label);
-    } catch {
-      message.error("Copy failed");
-    }
-  };
-
-  // encode lead object as base64
-  const encodeLead = (lead) => {
-    try {
-      const json = JSON.stringify(lead);
-      const b64 = btoa(unescape(encodeURIComponent(json)));
-      return b64;
-    } catch (err) {
-      console.error(err);
-      message.error("Encode failed");
-      return null;
-    }
-  };
-
-  // decode base64 -> JSON object
+  // 🔵 DECODE BASE64
   const decodeBase64 = (b64) => {
-    try {
-      const json = decodeURIComponent(escape(atob(b64)));
-      return JSON.parse(json);
-    } catch (err) {
-      throw new Error("Invalid base64 / JSON");
-    }
+    const json = decodeURIComponent(escape(atob(b64)));
+    return JSON.parse(json);
   };
 
-  // export visible leads to CSV
+  // 🔵 EXPORT CSV
   const exportCSV = (rows) => {
-    if (!rows?.length) {
-      message.info("No rows to export");
-      return;
-    }
+    if (!rows?.length) return message.info("No rows to export");
 
     const keys = [
       "_id",
       "name",
       "email",
       "googleId",
-      "picture",
       "source",
       "ip",
-      "userAgent",
       "createdAt",
     ];
 
     const csv = [
       keys.join(","),
       ...rows.map((r) =>
-        keys
-          .map((k) => {
-            const v = r[k];
-            if (v === undefined || v === null) return "";
-            return `"${String(v).replace(/"/g, '""')}"`;
-          })
-          .join(",")
+        keys.map((k) => `"${r[k] ?? ""}"`).join(",")
       ),
     ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
-    a.download = `leads_${new Date().toISOString().slice(0, 19)}.csv`;
-    document.body.appendChild(a);
+    a.download = "leads.csv";
     a.click();
-    a.remove();
     URL.revokeObjectURL(url);
     message.success("CSV exported");
   };
 
-  // filtered rows based on search
+  // 🔵 FILTER
   const filteredLeads = useMemo(() => {
     if (!searchTerm) return leads;
     const q = searchTerm.toLowerCase();
-    return leads.filter((l) => {
-      return (
-        (l.name && l.name.toLowerCase().includes(q)) ||
-        (l.email && l.email.toLowerCase().includes(q)) ||
-        (l.googleId && l.googleId.toLowerCase().includes(q)) ||
-        (l.ip && l.ip.toLowerCase().includes(q))
-      );
-    });
+    return leads.filter(
+      (l) =>
+        l.name?.toLowerCase().includes(q) ||
+        l.email?.toLowerCase().includes(q) ||
+        l.googleId?.toLowerCase().includes(q) ||
+        l.ip?.toLowerCase().includes(q)
+    );
   }, [leads, searchTerm]);
 
+  // 🔵 TABLE COLUMNS
   const columns = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      render: (t) => t || "—",
-      sorter: (a, b) => (a.name || "").localeCompare(b.name || ""),
-      width: 180,
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      render: (t) => t || "—",
-      width: 220,
-    },
+    { title: "Name", dataIndex: "name", width: 180 },
+    { title: "Email", dataIndex: "email", width: 220 },
     {
       title: "Source",
       dataIndex: "source",
       width: 140,
-      render: (s) => <Tag>{s}</Tag>,
+      render: (s) => <Tag color="blue">{s}</Tag>,
     },
     {
       title: "Created",
       dataIndex: "createdAt",
       width: 160,
-      render: (d) => (d ? new Date(d).toLocaleString() : "—"),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (d) => new Date(d).toLocaleString(),
     },
     {
       title: "Actions",
-      dataIndex: "_id",
-      width: 220,
-      render: (_id, record) => (
-        <Space size="middle">
-          <Tooltip title="View full JSON">
+      width: 180,
+      render: (_, record) => (
+        <Space>
+          <Tooltip title="View Details">
             <Button
               icon={<EyeOutlined />}
+              size="small"
               onClick={() => {
                 setSelectedLead(record);
-                setViewModalOpen(true);
+                setViewDrawerOpen(true);
               }}
-              size="small"
             />
           </Tooltip>
 
           <Popconfirm
             title="Delete this lead?"
-            onConfirm={() => deleteLead(_id)}
-            okText="Delete"
-            cancelText="Cancel"
+            onConfirm={() => deleteLead(record._id)}
           >
             <Button danger icon={<DeleteOutlined />} size="small" />
           </Popconfirm>
@@ -225,152 +163,160 @@ const AdminLeads = () => {
   ];
 
   return (
-    <Card
-      title="User Leads"
-      extra={
-        <Space>
-          <Search
-            placeholder="Search name / email / googleId / ip"
-            onSearch={(v) => setSearchTerm(v)}
-            style={{ width: 320 }}
-            allowClear
-          />
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={() => exportCSV(filteredLeads)}
-          >
-            Export CSV
-          </Button>
-
-          <Button onClick={fetchLeads}>Refresh</Button>
-        </Space>
-      }
-    >
-      <Table
-        dataSource={filteredLeads}
-        columns={columns}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 10 }}
-        scroll={{ x: 1100 }}
-      />
-
-      {/* VIEW JSON MODAL */}
-      <Modal
-        title={`Lead details ${
-          selectedLead?.name ? `— ${selectedLead.name}` : ""
-        }`}
-        open={viewModalOpen}
-        onCancel={() => setViewModalOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setViewModalOpen(false)}>
-            Close
-          </Button>,
-        ]}
-        width={780}
+    <>
+      <Card
+        title="User Leads"
+        extra={
+          <Space>
+            <Search
+              placeholder="Search name / email / googleId / ip"
+              onSearch={setSearchTerm}
+              allowClear
+              style={{ width: 320 }}
+            />
+            <Button onClick={() => setDecodeDrawerOpen(true)}>
+              Decode Base64
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => exportCSV(filteredLeads)}
+            >
+              Export CSV
+            </Button>
+          </Space>
+        }
       >
-        {selectedLead ? (
-          <div
-            style={{
-              maxHeight: 440,
-              overflow: "auto",
-              fontFamily: "monospace",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {JSON.stringify(selectedLead, null, 2)}
-          </div>
-        ) : (
-          <div>No lead selected</div>
-        )}
-      </Modal>
+        <Table
+          dataSource={filteredLeads}
+          columns={columns}
+          rowKey="_id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 1100 }}
+        />
+      </Card>
 
-      {/* DECODE BASE64 MODAL */}
-      <Modal
-        title="Decode Base64 string (paste encoded lead)"
-        open={decodeModalOpen}
-        onCancel={() => {
-          setDecodeModalOpen(false);
+      {/* 🔵 VIEW LEAD DETAILS DRAWER */}
+      <Drawer
+        title="Lead Details"
+        width={720}
+        open={viewDrawerOpen}
+        onClose={() => setViewDrawerOpen(false)}
+      >
+        {selectedLead && (
+          <>
+            <div style={{ display: "flex", gap: 16 }}>
+              <Avatar src={selectedLead.picture} size={64} />
+              <div>
+                <Text strong style={{ fontSize: 18 }}>
+                  {selectedLead.name}
+                </Text>
+                <br />
+                <Text type="secondary">{selectedLead.email}</Text>
+              </div>
+            </div>
+
+            <Divider />
+
+            <Descriptions bordered column={1} size="small">
+              <Descriptions.Item label="Lead ID">
+                <Text copyable>{selectedLead._id}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Google ID">
+                <Text copyable>{selectedLead.googleId}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Source">
+                <Tag>{selectedLead.source}</Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="IP Address">
+                <Text copyable>{selectedLead.ip}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Created At">
+                {new Date(selectedLead.createdAt).toLocaleString()}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Updated At">
+                {new Date(selectedLead.updatedAt).toLocaleString()}
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Divider />
+
+            <Text strong>Browser / Device Info</Text>
+            <Paragraph
+              style={{
+                background: "#fafafa",
+                padding: 12,
+                borderRadius: 6,
+                fontFamily: "monospace",
+                marginTop: 8,
+              }}
+            >
+              {selectedLead.userAgent}
+            </Paragraph>
+          </>
+        )}
+      </Drawer>
+
+      {/* 🔵 DECODE BASE64 DRAWER */}
+      <Drawer
+        title="Decode Base64 Lead"
+        placement="bottom"
+        height={420}
+        open={decodeDrawerOpen}
+        onClose={() => {
+          setDecodeDrawerOpen(false);
           setDecodeInput("");
           setDecodeResult(null);
         }}
-        footer={[
-          <Button
-            key="decode"
-            type="primary"
-            onClick={() => {
-              try {
-                const obj = decodeBase64(decodeInput.trim());
-                setDecodeResult(obj);
-                message.success("Decoded successfully");
-              } catch (err) {
-                setDecodeResult(null);
-                message.error("Invalid base64 / JSON");
-              }
-            }}
-          >
-            Decode
-          </Button>,
-          <Button
-            key="copy"
-            onClick={() => {
-              if (!decodeResult) {
-                message.info("Nothing decoded yet");
-                return;
-              }
-              copyToClipboard(
-                JSON.stringify(decodeResult, null, 2),
-                "Decoded JSON copied"
-              );
-            }}
-          >
-            Copy Decoded JSON
-          </Button>,
-          <Button
-            key="close"
-            onClick={() => {
-              setDecodeModalOpen(false);
-              setDecodeInput("");
-              setDecodeResult(null);
-            }}
-          >
-            Close
-          </Button>,
-        ]}
       >
         <Row gutter={[12, 12]}>
           <Col span={24}>
             <Input.TextArea
               rows={4}
-              placeholder="Paste base64-encoded lead here..."
+              placeholder="Paste base64-encoded lead..."
               value={decodeInput}
               onChange={(e) => setDecodeInput(e.target.value)}
             />
           </Col>
 
           <Col span={24}>
-            <div
+            <Button
+              type="primary"
+              onClick={() => {
+                try {
+                  setDecodeResult(decodeBase64(decodeInput.trim()));
+                  message.success("Decoded successfully");
+                } catch {
+                  message.error("Invalid base64 / JSON");
+                }
+              }}
+            >
+              Decode
+            </Button>
+          </Col>
+
+          <Col span={24}>
+            <pre
               style={{
-                minHeight: 120,
+                minHeight: 160,
                 background: "#fafafa",
                 padding: 12,
                 borderRadius: 6,
-                fontFamily: "monospace",
-                whiteSpace: "pre-wrap",
               }}
             >
-              {decodeResult ? (
-                JSON.stringify(decodeResult, null, 2)
-              ) : (
-                <span style={{ color: "#888" }}>
-                  Decoded object will appear here.
-                </span>
-              )}
-            </div>
+              {decodeResult
+                ? JSON.stringify(decodeResult, null, 2)
+                : "Decoded JSON will appear here"}
+            </pre>
           </Col>
         </Row>
-      </Modal>
-    </Card>
+      </Drawer>
+    </>
   );
 };
 
